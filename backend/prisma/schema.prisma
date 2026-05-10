@@ -1,0 +1,202 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Course_Section {
+  id                 String                  @id @db.VarChar(36)
+  semester           Course_Section_semester
+  academic_year      Int
+  section_number     String                  @db.VarChar(10)
+  max_capacity       Int
+  subject_id         String                  @db.VarChar(36)
+  staff_id           String                  @db.VarChar(36)
+  created_at         DateTime?               @default(now()) @db.DateTime(0)
+  updated_at         DateTime?               @default(now()) @db.DateTime(0)
+  created_by         String?                 @default("NT") @db.VarChar(50)
+  updated_by         String?                 @db.VarChar(50)
+  Subject            Subject                 @relation(fields: [subject_id], references: [id], onUpdate: NoAction, map: "Course_Section_ibfk_1")
+  Staff              Staff                   @relation(fields: [staff_id], references: [id], onUpdate: NoAction, map: "Course_Section_ibfk_2")
+  Schedule           Schedule[]
+  Student_Enrollment Student_Enrollment[]
+
+  @@unique([subject_id, semester, academic_year, section_number], map: "unique_section_block")
+  @@index([staff_id], map: "staff_id")
+}
+
+model Fee {
+  id             String             @id @db.VarChar(36)
+  amount_due     Decimal            @db.Decimal(10, 2)
+  amount_paid    Decimal?           @db.Decimal(10, 2)
+  due_date       DateTime           @db.DateTime(0)
+  payment_status Fee_payment_status @default(unpaid)
+  student_id     String             @db.VarChar(36)
+  created_at     DateTime?          @default(now()) @db.DateTime(0)
+  updated_at     DateTime?          @default(now()) @db.DateTime(0)
+  created_by     String?            @default("NT") @db.VarChar(50)
+  updated_by     String?            @db.VarChar(50)
+  Student        Student            @relation(fields: [student_id], references: [id], onUpdate: NoAction, map: "Fee_ibfk_1")
+
+  @@index([student_id], map: "student_id")
+}
+
+model Room {
+  id          String     @id @db.VarChar(36)
+  room_number String     @unique(map: "room_number") @db.VarChar(50)
+  capacity    Int
+  is_lab      Boolean?   @default(false)
+  created_at  DateTime?  @default(now()) @db.DateTime(0)
+  updated_at  DateTime?  @default(now()) @db.DateTime(0)
+  created_by  String?    @default("NT") @db.VarChar(50)
+  updated_by  String?    @db.VarChar(50)
+  Schedule    Schedule[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model Salary {
+  id            String    @id @db.VarChar(36)
+  base_salary   Decimal   @db.Decimal(10, 2)
+  allowances    Decimal?  @db.Decimal(10, 2)
+  deductions    Decimal?  @db.Decimal(10, 2)
+  net_salary    Decimal?  @db.Decimal(10, 2)
+  payment_month Int       @db.TinyInt
+  payment_year  Int
+  staff_id      String    @db.VarChar(36)
+  created_at    DateTime? @default(now()) @db.DateTime(0)
+  updated_at    DateTime? @default(now()) @db.DateTime(0)
+  created_by    String?   @default("NT") @db.VarChar(50)
+  updated_by    String?   @db.VarChar(50)
+  Staff         Staff     @relation(fields: [staff_id], references: [id], onUpdate: NoAction, map: "Salary_ibfk_1")
+
+  @@unique([staff_id, payment_month, payment_year], map: "unique_monthly_payslip")
+}
+
+model Schedule {
+  id                String               @id @db.VarChar(36)
+  day_of_week       Schedule_day_of_week
+  start_time        DateTime             @db.Time(0)
+  end_time          DateTime             @db.Time(0)
+  course_section_id String               @db.VarChar(36)
+  room_id           String               @db.VarChar(36)
+  created_at        DateTime?            @default(now()) @db.DateTime(0)
+  updated_at        DateTime?            @default(now()) @db.DateTime(0)
+  created_by        String?              @default("NT") @db.VarChar(50)
+  updated_by        String?              @db.VarChar(50)
+  Course_Section    Course_Section       @relation(fields: [course_section_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "Schedule_ibfk_1")
+  Room              Room                 @relation(fields: [room_id], references: [id], onUpdate: NoAction, map: "Schedule_ibfk_2")
+
+  @@index([course_section_id], map: "course_section_id")
+  @@index([room_id], map: "room_id")
+}
+
+model Staff {
+  id               String           @id @db.VarChar(36)
+  employee_code    String           @unique(map: "employee_code") @db.VarChar(100)
+  staff_first_name String           @db.VarChar(100)
+  staff_last_name  String           @db.VarChar(100)
+  hire_date        DateTime?        @db.Date
+  department       String           @db.VarChar(100)
+  user_id          String?          @unique(map: "user_id") @db.VarChar(36)
+  created_at       DateTime?        @default(now()) @db.DateTime(0)
+  updated_at       DateTime?        @default(now()) @db.DateTime(0)
+  created_by       String?          @default("NT") @db.VarChar(50)
+  updated_by       String?          @db.VarChar(50)
+  Course_Section   Course_Section[]
+  Salary           Salary[]
+  Users            Users?           @relation(fields: [user_id], references: [id], onUpdate: NoAction, map: "Staff_ibfk_1")
+}
+
+model Student {
+  id                 String               @id @db.VarChar(36)
+  student_code       String               @unique(map: "student_code") @db.VarChar(100)
+  student_first_name String               @db.VarChar(100)
+  student_last_name  String               @db.VarChar(100)
+  enrollment_date    DateTime?            @db.Date
+  user_id            String?              @unique(map: "user_id") @db.VarChar(36)
+  created_at         DateTime?            @default(now()) @db.DateTime(0)
+  updated_at         DateTime?            @default(now()) @db.DateTime(0)
+  created_by         String?              @default("NT") @db.VarChar(50)
+  updated_by         String?              @db.VarChar(50)
+  Fee                Fee[]
+  Users              Users?               @relation(fields: [user_id], references: [id], onUpdate: NoAction, map: "Student_ibfk_1")
+  Student_Enrollment Student_Enrollment[]
+}
+
+model Student_Enrollment {
+  id                String                               @id @db.VarChar(36)
+  enrollment_status Student_Enrollment_enrollment_status @default(pending)
+  student_id        String                               @db.VarChar(36)
+  course_section_id String                               @db.VarChar(36)
+  created_at        DateTime?                            @default(now()) @db.DateTime(0)
+  updated_at        DateTime?                            @default(now()) @db.DateTime(0)
+  created_by        String?                              @default("NT") @db.VarChar(50)
+  updated_by        String?                              @db.VarChar(50)
+  Student           Student                              @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "Student_Enrollment_ibfk_1")
+  Course_Section    Course_Section                       @relation(fields: [course_section_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "Student_Enrollment_ibfk_2")
+
+  @@unique([student_id, course_section_id], map: "unique_enrollment")
+  @@index([course_section_id], map: "course_section_id")
+}
+
+model Subject {
+  id             String           @id @db.VarChar(36)
+  subject_code   String           @unique(map: "subject_code") @db.VarChar(100)
+  subject_name   String           @db.VarChar(100)
+  credits        Int
+  created_at     DateTime?        @default(now()) @db.DateTime(0)
+  updated_at     DateTime?        @default(now()) @db.DateTime(0)
+  created_by     String?          @default("NT") @db.VarChar(50)
+  updated_by     String?          @db.VarChar(50)
+  Course_Section Course_Section[]
+}
+
+model Users {
+  id            String     @id @db.VarChar(36)
+  email         String     @unique(map: "email") @db.VarChar(100)
+  password_hash String     @db.VarChar(255)
+  role          Users_role
+  is_active     Boolean?   @default(true)
+  created_at    DateTime?  @default(now()) @db.DateTime(0)
+  updated_at    DateTime?  @default(now()) @db.DateTime(0)
+  created_by    String?    @default("NT") @db.VarChar(50)
+  updated_by    String?    @db.VarChar(50)
+  Staff         Staff?
+  Student       Student?
+}
+
+enum Course_Section_semester {
+  SEMESTER_1 @map("1")
+  SEMESTER_2 @map("2")
+  SEMESTER_3 @map("3")
+}
+
+enum Schedule_day_of_week {
+  MON
+  TUE
+  WED
+  THU
+  FRI
+  SAT
+}
+
+enum Student_Enrollment_enrollment_status {
+  approving
+  pending
+  declining
+}
+
+enum Users_role {
+  Admin
+  Staff
+  Student
+}
+
+enum Fee_payment_status {
+  paid
+  unpaid
+  overdue
+}
