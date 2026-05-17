@@ -9,9 +9,9 @@ export const LoginPage = () => {
           {/* Logo Placeholder */}
           <div className="mb-12 flex items-center gap-2">
             <div className="w-8 h-8 bg-primary rounded-[6px] flex items-center justify-center">
-              <span className="text-white font-bold text-[14px]">SMS</span>
+              <span className="text-white font-bold text-[14px]">E</span>
             </div>
-            <span className="font-display font-semibold text-[18px] tracking-tight">Platform</span>
+            <span className="font-display font-semibold text-[18px] tracking-tight">Edusoft</span>
           </div>
           
           <LoginForm />
