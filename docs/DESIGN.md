@@ -1,29 +1,29 @@
 ---
 version: alpha
 name: Linear
-description: "A near-black product-focused marketing canvas built around #010102 (the deepest dark surface of any tool in this collection), light gray text (#f7f8f8), and the signature Linear lavender-blue (#5e6ad2) used as the single chromatic accent. The system reads as software-craft documentation: dense, technical, and quietly luxurious. Display type is set in the Linear custom sans (SF Pro Display fallback) at 500–700 with measured negative tracking. Cards live as charcoal panels (#0f1011) with hairline borders. The accent lavender appears on the brand mark, focus rings, and a few intentional CTAs — never decoratively. Page rhythm leans on product UI screenshots framed in dark panels rather than atmospheric color."
+description: "A crisp, product-focused marketing canvas built around #ffffff (pure white), deep gray text (#111827), and the signature Linear lavender-blue (#5e6ad2) used as the single chromatic accent. The system reads as software-craft documentation: dense, technical, and quietly luxurious. Display type is set in the Linear custom sans (SF Pro Display fallback) at 500–700 with measured negative tracking. Cards live as subtle gray panels (#f9fafb) with hairline borders. The accent lavender appears on the brand mark, focus rings, and a few intentional CTAs — never decoratively. Page rhythm leans on product UI screenshots framed in panels rather than atmospheric color."
 
 colors:
   primary: "#5e6ad2"
   on-primary: "#ffffff"
   primary-hover: "#828fff"
   primary-focus: "#5e69d1"
-  ink: "#f7f8f8"
-  ink-muted: "#d0d6e0"
-  ink-subtle: "#8a8f98"
-  ink-tertiary: "#62666d"
-  canvas: "#010102"
-  surface-1: "#0f1011"
-  surface-2: "#141516"
-  surface-3: "#18191a"
-  surface-4: "#191a1b"
-  hairline: "#23252a"
-  hairline-strong: "#34343a"
-  hairline-tertiary: "#3e3e44"
-  inverse-canvas: "#ffffff"
-  inverse-surface-1: "#f5f6f6"
-  inverse-surface-2: "#f6f7f7"
-  inverse-ink: "#000000"
+  ink: "#111827"
+  ink-muted: "#4b5563"
+  ink-subtle: "#6b7280"
+  ink-tertiary: "#9ca3af"
+  canvas: "#ffffff"
+  surface-1: "#f9fafb"
+  surface-2: "#f3f4f6"
+  surface-3: "#e5e7eb"
+  surface-4: "#d1d5db"
+  hairline: "#e5e7eb"
+  hairline-strong: "#d1d5db"
+  hairline-tertiary: "#9ca3af"
+  inverse-canvas: "#111827"
+  inverse-surface-1: "#1f2937"
+  inverse-surface-2: "#374151"
+  inverse-ink: "#ffffff"
   brand-secure: "#7a7fad"
   semantic-success: "#27a644"
   semantic-overlay: "#000000"
@@ -257,7 +257,7 @@ components:
 
 ## Overview
 
-Linear's marketing canvas is the deepest dark surface in this collection — `{colors.canvas}` is #010102, essentially pure black with a faint blue tint. On top sits a four-step surface ladder (`{colors.surface-1}` through `{colors.surface-4}`) for cards, panels, and lifted tiles, with hairline borders running from `{colors.hairline}` (#23252a) up through `{colors.hairline-strong}` and `{colors.hairline-tertiary}`. Light gray text (`{colors.ink}` #f7f8f8) carries the body and headlines.
+Linear's marketing canvas is a crisp, clean surface — `{colors.canvas}` is #ffffff, pure white. On top sits a four-step surface ladder (`{colors.surface-1}` through `{colors.surface-4}`) for cards, panels, and lifted tiles, with hairline borders running from `{colors.hairline}` (#e5e7eb) up through `{colors.hairline-strong}` and `{colors.hairline-tertiary}`. Deep gray text (`{colors.ink}` #111827) carries the body and headlines.
 
 The single chromatic accent is **Linear lavender-blue** `{colors.primary}` (#5e6ad2) — used on the brand mark, focus rings, and the primary CTA button. A lighter hover state (`{colors.primary-hover}` #828fff) and a focus-tinted variant (`{colors.primary-focus}` #5e69d1) extend the same hue. Linear avoids saturated greens, oranges, reds, etc. on the marketing canvas — the only semantic color is `{colors.semantic-success}` (#27a644) for status pills and the rare success indicator.
 
@@ -266,12 +266,12 @@ Display type runs Linear's custom sans (with `SF Pro Display` fallback) at weigh
 The page rhythm is **dense product screenshots** — Linear's marketing leads with high-fidelity captures of the product UI (issue list, project view, dashboard) framed in `{colors.surface-1}` panels with `{rounded.xl}` 16px corners. The chrome is intentionally minimal so the app screenshots can do the heavy lifting.
 
 **Key Characteristics:**
-- **Dark-canvas marketing system** — `{colors.canvas}` (#010102) is the deepest dark in this collection.
+- **Light-canvas marketing system** — `{colors.canvas}` (#ffffff) is the base canvas.
 - **Lavender-blue brand accent** (`{colors.primary}` #5e6ad2) — used scarcely on brand mark, focus, and the primary CTA.
-- Four-step surface ladder (canvas → surface-1 → surface-2 → surface-3 → surface-4) carries hierarchy without shadow.
+- Four-step surface ladder (canvas → surface-1 → surface-2 → surface-3 → surface-4) carries hierarchy without heavy shadow.
 - Display tracking pulls aggressively negative (-3.0px at 80px); body holds at -0.05px.
 - Cards use `{rounded.lg}` 12px corners with 1px hairline borders — never pill, rarely 16px.
-- **Product UI screenshots** dominate the page. The marketing chrome is a dark frame for the app.
+- **Product UI screenshots** dominate the page. The marketing chrome is a subtle frame for the app.
 - No second chromatic color. No atmospheric gradients. No spotlight cards.
 
 ## Colors
@@ -285,7 +285,7 @@ The page rhythm is **dense product screenshots** — Linear's marketing leads wi
 - **Brand Secure** ({colors.brand-secure}): Muted lavender-gray (#7a7fad) — used in "Linear Security" surfaces.
 
 ### Surface
-- **Canvas** ({colors.canvas}): Default page background — #010102, near-pure black with a faint blue tint.
+- **Canvas** ({colors.canvas}): Default page background — #ffffff, pure white.
 - **Surface 1** ({colors.surface-1}): One step above canvas — feature cards, pricing cards, product screenshot panels.
 - **Surface 2** ({colors.surface-2}): Two steps above — featured pricing card, hovered cards.
 - **Surface 3** ({colors.surface-3}): Three steps above — line-tertiary backgrounds, sub-nav.
@@ -293,15 +293,15 @@ The page rhythm is **dense product screenshots** — Linear's marketing leads wi
 - **Hairline** ({colors.hairline}): 1px borders on cards and dividers.
 - **Hairline Strong** ({colors.hairline-strong}): Stronger 1px borders — input focus rings.
 - **Hairline Tertiary** ({colors.hairline-tertiary}): Tertiary borders for nested surfaces.
-- **Inverse Canvas** ({colors.inverse-canvas}): Pure white — surface of the inverse pill CTA on a small set of section openers.
+- **Inverse Canvas** ({colors.inverse-canvas}): Dark slate — surface of the inverse pill CTA on a small set of section openers.
 - **Inverse Surface 1** ({colors.inverse-surface-1}): One step above inverse canvas.
 - **Inverse Surface 2** ({colors.inverse-surface-2}): Two steps above inverse canvas.
 
 ### Text
-- **Ink** ({colors.ink}): All headlines and emphasized body type — light gray #f7f8f8.
-- **Ink Muted** ({colors.ink-muted}): Secondary type at #d0d6e0 — meta info on hero panels.
-- **Ink Subtle** ({colors.ink-subtle}): Tertiary type at #8a8f98 — deselected pricing tabs, footer columns.
-- **Ink Tertiary** ({colors.ink-tertiary}): Quaternary at #62666d — disabled, footnotes.
+- **Ink** ({colors.ink}): All headlines and emphasized body type — deep gray #111827.
+- **Ink Muted** ({colors.ink-muted}): Secondary type at #4b5563 — meta info on hero panels.
+- **Ink Subtle** ({colors.ink-subtle}): Tertiary type at #6b7280 — deselected pricing tabs, footer columns.
+- **Ink Tertiary** ({colors.ink-tertiary}): Quaternary at #9ca3af — disabled, footnotes.
 
 ### Semantic
 - **Success Green** ({colors.semantic-success}): Status pills, success indicators. The only semantic color on marketing.
@@ -365,25 +365,25 @@ Linear's custom typeface isn't publicly distributed; the documented fallback `SF
 
 ### Whitespace Philosophy
 
-The dark canvas IS the whitespace. Sections separate by lift onto surface-1 panels, not by gaps in white. Within a panel, generous `{spacing.lg}` 24px gaps between content blocks; `{spacing.section}` 96px between sections.
+The white canvas IS the whitespace. Sections separate by lift onto surface-1 panels, not just gaps. Within a panel, generous `{spacing.lg}` 24px gaps between content blocks; `{spacing.section}` 96px between sections.
 
 ## Elevation & Depth
 
 | Level | Treatment | Use |
 |---|---|---|
 | 0 (flat) | No shadow, no border | Default for body type, hero text, footer |
-| 1 (charcoal lift) | `{colors.surface-1}` background on canvas, 1px `{colors.hairline}` | Default cards, product panels |
+| 1 (subtle lift) | `{colors.surface-1}` background on canvas, 1px `{colors.hairline}` | Default cards, product panels |
 | 2 (surface-2 lift) | `{colors.surface-2}` background, 1px `{colors.hairline-strong}` | Featured pricing card, hovered cards |
 | 3 (surface-3 lift) | `{colors.surface-3}` background | Sub-nav, dropdown menus |
 | 4 (focus ring) | 2px `{colors.primary-focus}` outline at 50% opacity | Focused input, focused button |
 
-Linear's depth is carried by surface ladder + hairline borders. The brand resists drop shadows on dark almost entirely.
+Linear's depth is carried by surface ladder + hairline borders. The brand resists heavy drop shadows almost entirely.
 
 ### Decorative Depth
 
 - **Product UI screenshots** dominate as decorative depth.
 - **No atmospheric gradients, no spotlight cards.**
-- **Subtle white edge highlight** on the top edge of lifted panels — gives the dark surface a faint "pixel rendered" feel.
+- **Subtle border shadow** on lifted panels — gives the surface a faint definition.
 
 ## Shapes
 
@@ -481,7 +481,7 @@ Linear's depth is carried by surface ladder + hairline borders. The brand resist
 
 ### Do
 
-- Reserve `{colors.canvas}` (#010102) as the system's anchor surface — the faint blue tint is intentional.
+- Reserve `{colors.canvas}` (#ffffff) as the system's anchor surface.
 - Use `{colors.primary}` lavender ONLY for: brand mark, primary CTA, focus ring, link emphasis.
 - Use the four-step surface ladder for hierarchy. Avoid skipping levels.
 - Pair display weight 600 with body weight 400 — Linear resists 700+ display weights.
@@ -491,12 +491,12 @@ Linear's depth is carried by surface ladder + hairline borders. The brand resist
 
 ### Don't
 
-- Don't ship a light-mode marketing page.
+- Don't ship a dark-mode marketing page.
 - Don't use lavender as a section background or card fill.
 - Don't introduce a second chromatic accent (orange, pink, green for marketing).
 - Don't add atmospheric gradients or spotlight cards.
 - Don't pill-round CTAs.
-- Don't use `#000000` true black as the canvas.
+- Don't use pure black for text, use `{colors.ink}` instead.
 - Don't combine multiple bright accents in product screenshot mockups.
 
 ## Responsive Behavior
