@@ -1,21 +1,12 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import prisma from '../../config/db';
-import { loginSchema } from './auth.schema';
 import { signToken } from '../../utils/jwt';
 import { asyncHandler } from '../../utils/asyncHandler';
 import { ApiError } from '../../middlewares/errorHandler';
 
 export const login = asyncHandler(async (req: Request, res: Response) => {
-  const parseResult = loginSchema.safeParse(req.body);
-  if (!parseResult.success) {
-    return res.status(400).json({
-      message: 'Invalid input',
-      errors: parseResult.error.flatten().fieldErrors
-    });
-  }
-
-  const { email, password } = parseResult.data;
+  const { email, password } = req.body;
 
   const user = await prisma.users.findUnique({
     where: { email }
