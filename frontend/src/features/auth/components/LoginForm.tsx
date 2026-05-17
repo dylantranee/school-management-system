@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../../context/AuthContext';
-import { Button } from '../../../components/ui/Button';
-import { Input } from '../../../components/ui/Input';
-import { useLogin } from '../api/useLogin';
+import { useAuth } from '@/context/AuthContext';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { useLogin } from '@/features/auth/api/useLogin';
 import { z } from 'zod';
 
 const loginSchema = z.object({
@@ -55,6 +55,10 @@ export const LoginForm = () => {
 
   const globalError = getGlobalError();
   const isLoading = loginMutation.isPending;
+  
+  // Check for expired session from SMS-22 Scenario 2
+  const params = new URLSearchParams(window.location.search);
+  const isExpired = params.get('expired') === 'true';
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
@@ -67,6 +71,12 @@ export const LoginForm = () => {
         </p>
       </div>
 
+      {isExpired && !globalError && (
+        <div className="p-3 rounded-md bg-secondary border border-border text-foreground text-[14px]">
+          Your session has expired. Please log in again.
+        </div>
+      )}
+
       {globalError && (
         <div className="p-3 rounded-md bg-destructive/10 border border-destructive/20 text-destructive text-[14px]">
           {globalError}
@@ -76,7 +86,7 @@ export const LoginForm = () => {
       <div className="flex flex-col gap-4">
         <Input 
           type="email" 
-          placeholder="name@school.edu" 
+          placeholder="ITITIU22001@hcmiu.edu.vn" 
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           error={errors.email}

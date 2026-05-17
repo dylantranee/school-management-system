@@ -1,5 +1,4 @@
-import React from 'react';
-import { LoginForm } from '../components/LoginForm';
+import { LoginForm } from '@/features/auth/components/LoginForm';
 
 export const LoginPage = () => {
   return (

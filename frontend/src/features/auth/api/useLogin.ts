@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import api from '../../../lib/axios';
+import api from '@/lib/axios';
 
 interface LoginResponse {
   message: string;

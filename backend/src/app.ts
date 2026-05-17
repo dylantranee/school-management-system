@@ -2,7 +2,7 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { env } from './config/env';
-import authRoutes from './modules/auth/auth.routes';
+import apiRouter from './routes';
 import { errorHandler } from './middlewares/errorHandler';
 
 const app = express();
@@ -21,7 +21,8 @@ app.get('/api/v1/health', (req: Request, res: Response) => {
   res.status(200).json({ status: 'ok', message: 'Server is running' });
 });
 
-app.use('/api/v1/auth', authRoutes);
+// Central API Router
+app.use('/api/v1', apiRouter);
 
 // Global Error Handler must be the last middleware
 app.use(errorHandler);

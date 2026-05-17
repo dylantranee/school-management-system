@@ -1,10 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
-import { LoginPage } from './features/auth/pages/LoginPage';
-import { ProtectedRoute } from './components/ProtectedRoute';
-import { useAuth } from './context/AuthContext';
-import { Button } from './components/ui/Button';
+import { AuthProvider } from '@/context/AuthContext';
+import { LoginPage } from '@/features/auth/pages/LoginPage';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { useAuth } from '@/context/AuthContext';
+import { Button } from '@/components/ui/Button';
 
 const queryClient = new QueryClient();
 
