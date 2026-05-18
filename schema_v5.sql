@@ -1,0 +1,143 @@
+DROP DATABASE IF EXISTS school_management;
+CREATE DATABASE school_management;
+USE school_management;
+
+CREATE TABLE Users (
+	id VARCHAR(36) PRIMARY KEY,
+	email VARCHAR(100) UNIQUE NOT NULL,
+	password_hash VARCHAR(255) NOT NULL,
+	role ENUM('Admin', 'Staff', 'Student') NOT NULL,
+	is_active BOOLEAN DEFAULT TRUE,
+	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+	updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+	created_by VARCHAR(50) DEFAULT 'NT',
+	updated_by VARCHAR(50)
+);
+
+CREATE TABLE Staff (
+	id VARCHAR(36) PRIMARY KEY,
+	employee_code VARCHAR(100) UNIQUE NOT NULL,
+	staff_first_name VARCHAR(100) NOT NULL,
+	staff_last_name VARCHAR(100) NOT NULL,
+	hire_date DATE,
+	department VARCHAR(100) NOT NULL,
+	user_id VARCHAR(36) UNIQUE,
+	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+	updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+	created_by VARCHAR(50) DEFAULT 'NT',
+	updated_by VARCHAR(50),
+	FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE SET NULL
+);
+
+CREATE TABLE Student (
+	id VARCHAR(36) PRIMARY KEY,
+	student_code VARCHAR(100) UNIQUE NOT NULL,
+	student_first_name VARCHAR(100) NOT NULL,
+	student_last_name VARCHAR(100) NOT NULL,
+	enrollment_date DATE,
+	user_id VARCHAR(36) UNIQUE,
+	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+	updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+	created_by VARCHAR(50) DEFAULT 'NT',
+	updated_by VARCHAR(50),
+	FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE SET NULL
+);
+
+CREATE TABLE Salary (
+	id VARCHAR(36) PRIMARY KEY,
+	base_salary DECIMAL(10, 2) NOT NULL,
+	allowances DECIMAL(10, 2),
+	deductions DECIMAL(10, 2),
+	net_salary DECIMAL(10, 2),
+	payment_month TINYINT CHECK (payment_month BETWEEN 1 AND 12) NOT NULL,
+	payment_year INT NOT NULL,
+	staff_id VARCHAR(36) NOT NULL,
+	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+	updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+	created_by VARCHAR(50) DEFAULT 'NT',
+	updated_by VARCHAR(50),
+	FOREIGN KEY (staff_id) REFERENCES Staff(id) ON DELETE RESTRICT,
+	CONSTRAINT unique_monthly_payslip UNIQUE (staff_id, payment_month, payment_year)
+);
+
+CREATE TABLE Subject (
+	id VARCHAR(36) PRIMARY KEY,
+	subject_code VARCHAR(100) UNIQUE NOT NULL,
+	subject_name VARCHAR(100) NOT NULL,
+	credits INT NOT NULL,
+	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+	updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+	created_by VARCHAR(50) DEFAULT 'NT',
+	updated_by VARCHAR(50)
+);
+
+CREATE TABLE Fee (
+	id VARCHAR(36) PRIMARY KEY,
+	amount_due DECIMAL(10, 2) NOT NULL,
+	amount_paid DECIMAL(10, 2),
+	due_date DATETIME NOT NULL,
+	payment_status ENUM('paid', 'unpaid', 'overdue') NOT NULL DEFAULT 'unpaid',
+	student_id VARCHAR(36) NOT NULL,
+	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+	updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+	created_by VARCHAR(50)DEFAULT 'NT',
+	updated_by VARCHAR(50),
+	FOREIGN KEY (student_id) REFERENCES Student(id) ON DELETE RESTRICT
+);
+
+CREATE TABLE Course_Section (
+	id VARCHAR(36) PRIMARY KEY,
+	semester ENUM('1', '2', '3') NOT NULL,
+	academic_year INT NOT NULL,
+	section_number VARCHAR(10) NOT NULL,
+	max_capacity INT NOT NULL,
+	subject_id VARCHAR(36) NOT NULL,
+	staff_id VARCHAR(36) NOT NULL,
+	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+	updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+	created_by VARCHAR(50) DEFAULT 'NT',
+	updated_by VARCHAR(50),
+	FOREIGN KEY (subject_id) REFERENCES Subject(id) ON DELETE RESTRICT,
+	FOREIGN KEY (staff_id) REFERENCES Staff(id) ON DELETE RESTRICT,
+    CONSTRAINT unique_section_block UNIQUE (subject_id, semester, academic_year, section_number)
+);
+
+CREATE TABLE Student_Enrollment (
+	id VARCHAR(36) PRIMARY KEY,
+	enrollment_status ENUM('approving', 'pending', 'declining') NOT NULL DEFAULT 'pending',
+	student_id VARCHAR(36) NOT NULL,
+	course_section_id VARCHAR(36) NOT NULL,
+	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+	updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+	created_by VARCHAR(50) DEFAULT 'NT',
+	updated_by VARCHAR(50),
+	FOREIGN KEY (student_id) REFERENCES Student(id) ON DELETE CASCADE,
+	FOREIGN KEY (course_section_id) REFERENCES Course_Section(id) ON DELETE CASCADE,
+    CONSTRAINT unique_enrollment UNIQUE (student_id, course_section_id)
+);
+
+CREATE TABLE Room (
+	id VARCHAR(36) PRIMARY KEY,
+	room_number VARCHAR(50) UNIQUE NOT NULL,
+	capacity INT NOT NULL,
+	is_lab BOOLEAN DEFAULT FALSE,
+	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+	updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+	created_by VARCHAR(50) DEFAULT 'NT',
+	updated_by VARCHAR(50)
+);
+
+CREATE TABLE Schedule (
+	id VARCHAR(36) PRIMARY KEY,
+	day_of_week ENUM('MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT') NOT NULL,
+	start_time TIME NOT NULL,
+	end_time TIME NOT NULL,
+	course_section_id VARCHAR(36) NOT NULL,
+	room_id VARCHAR(36) NOT NULL,
+	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+	updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+	created_by VARCHAR(50) DEFAULT 'NT',
+	updated_by VARCHAR(50),
+	FOREIGN KEY (course_section_id) REFERENCES Course_Section(id) ON DELETE CASCADE,
+	FOREIGN KEY (room_id) REFERENCES Room(id) ON DELETE RESTRICT
+);
