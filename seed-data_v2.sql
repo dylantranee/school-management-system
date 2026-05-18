@@ -13,7 +13,6 @@ TRUNCATE TABLE Student_Enrollment;
 TRUNCATE TABLE Room;
 TRUNCATE TABLE Schedule;
 
-SET FOREIGN_KEY_CHECKS = 1;
 
 INSERT INTO Users (id, email, password_hash, role) VALUES
 ('5b50cf36-373a-4681-934b-3eca320d9573', 'ntmthu3110@gmail.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Admin'),
