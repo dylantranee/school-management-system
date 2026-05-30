@@ -21,13 +21,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const setUserWithStorage = (newUser: User | null) => {
+    if (newUser) {
+      localStorage.setItem('isAuthenticated', 'true');
+    } else {
+      localStorage.removeItem('isAuthenticated');
+    }
+    setUser(newUser);
+  };
+
   useEffect(() => {
     const recoverSession = async () => {
+      const hasSession = localStorage.getItem('isAuthenticated') === 'true';
+      if (!hasSession) {
+        setLoading(false);
+        return;
+      }
+
       try {
         const response = await api.get('/auth/me');
-        setUser(response.data);
+        setUserWithStorage(response.data);
       } catch (error) {
-        // No active session or user inactive; fail silently
+        setUserWithStorage(null);
       } finally {
         setLoading(false);
       }
@@ -41,7 +56,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       (response) => response,
       (error) => {
         if (error.response?.status === 401) {
-          setUser(null);
+          setUserWithStorage(null);
           // Only redirect if not already on login
           if (window.location.pathname !== '/login') {
             window.location.href = '/login?expired=true';
@@ -61,12 +76,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.error('Logout error:', error);
     } finally {
       // Frontend-first logout fail-safe (Scenario 3 of SMS-22)
-      setUser(null);
+      setUserWithStorage(null);
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, setUser, logout, loading }}>
+    <AuthContext.Provider value={{ user, setUser: setUserWithStorage, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );
