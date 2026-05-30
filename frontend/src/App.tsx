@@ -3,31 +3,12 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from '@/context/AuthContext';
 import { LoginPage } from '@/features/auth/pages/LoginPage';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
-import { useAuth } from '@/context/AuthContext';
-import { Button } from '@/components/ui/Button';
+import { RoleRoute } from '@/components/RoleRoute';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { DashboardPage } from '@/features/dashboard/pages/DashboardPage';
+import { UserManagementPage } from '@/features/users/pages/UserManagementPage';
 
 const queryClient = new QueryClient();
-
-// Dummy Dashboard Component to verify login/logout
-const Dashboard = () => {
-  const { user, logout } = useAuth();
-  return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-      <div className="bg-card border border-border p-8 rounded-lg shadow-xl max-w-md w-full text-center space-y-6">
-        <h1 className="font-display text-2xl text-foreground">Welcome to your Dashboard</h1>
-        <p className="text-muted-foreground font-sans">
-          You are logged in as <strong className="text-foreground">{user?.email}</strong>
-        </p>
-        <p className="text-muted-foreground font-sans text-sm">
-          Role: {user?.role}
-        </p>
-        <Button onClick={logout} variant="secondary" className="w-full">
-          Secure Logout
-        </Button>
-      </div>
-    </div>
-  );
-};
 
 function App() {
   return (
@@ -38,11 +19,21 @@ function App() {
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<LoginPage />} />
             
-            <Route path="/dashboard" element={
+            {/* Dashboard Shell - Wraps all protected routes */}
+            <Route element={
               <ProtectedRoute>
-                <Dashboard />
+                <DashboardLayout />
               </ProtectedRoute>
-            } />
+            }>
+              <Route path="/dashboard" element={<DashboardPage />} />
+              
+              <Route path="/admin/users" element={
+                <RoleRoute allowedRoles={['Admin']}>
+                  <UserManagementPage />
+                </RoleRoute>
+              } />
+            </Route>
+
           </Routes>
         </BrowserRouter>
       </AuthProvider>

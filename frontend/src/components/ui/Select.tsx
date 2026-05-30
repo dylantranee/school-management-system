@@ -1,4 +1,4 @@
-import React, { InputHTMLAttributes } from 'react';
+import React, { SelectHTMLAttributes } from 'react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -6,13 +6,14 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+export interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   error?: string;
   label?: string;
+  options: { value: string; label: string }[];
 }
 
-export const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, error, label, ...props }, ref) => {
+export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
+  ({ className, error, label, options, ...props }, ref) => {
     return (
       <div className="w-full flex flex-col gap-1.5">
         {label && (
@@ -20,7 +21,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             {label}
           </label>
         )}
-        <input
+        <select
           ref={ref}
           className={cn(
             "flex w-full rounded-md bg-card border border-transparent px-[12px] py-[8px] text-[16px] leading-[1.5] text-foreground transition-colors placeholder:text-muted-foreground",
@@ -29,10 +30,17 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             className
           )}
           {...props}
-        />
+        >
+          <option value="" disabled>Select an option...</option>
+          {options.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
         {error && <span className="text-[12px] text-destructive">{error}</span>}
       </div>
     );
   }
 );
-Input.displayName = "Input";
+Select.displayName = "Select";

@@ -85,14 +85,16 @@ export const LoginForm = () => {
 
       <div className="flex flex-col gap-4">
         <Input 
+          label="Email address"
           type="email" 
-          placeholder="ITITIU22001@hcmiu.edu.vn" 
+          placeholder="example@hcmiu.edu.vn" 
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           error={errors.email}
           disabled={isLoading}
         />
         <Input 
+          label="Password"
           type="password" 
           placeholder="Password" 
           value={password}
