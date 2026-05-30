@@ -8,9 +8,18 @@ import { errorHandler } from './middlewares/errorHandler';
 const app = express();
 const port = env.PORT;
 
+const allowedOrigins = env.CORS_ORIGIN.split(',').map(o => o.trim());
+
 // Middleware
 app.use(cors({
-  origin: 'http://localhost:5173', // Vite default port
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1 || allowedOrigins.includes('*')) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
 app.use(express.json());
