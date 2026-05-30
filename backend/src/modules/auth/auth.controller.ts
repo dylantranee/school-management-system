@@ -90,3 +90,20 @@ export const logout = asyncHandler(async (req: Request, res: Response) => {
   });
   res.status(200).json({ message: 'Logged out successfully' });
 });
+
+export const getMe = asyncHandler(async (req: Request, res: Response) => {
+  const user = await prisma.users.findUnique({
+    where: { id: (req as any).user.userId }
+  });
+
+  if (!user) {
+    throw new ApiError(404, 'User not found');
+  }
+
+  if (!user.is_active) {
+    throw new ApiError(403, 'Your account is currently inactive. Please contact the administrator.');
+  }
+
+  const { password_hash, ...userWithoutPassword } = user;
+  res.status(200).json(userWithoutPassword);
+});

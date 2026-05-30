@@ -12,12 +12,28 @@ interface AuthContextType {
   user: User | null;
   setUser: (user: User | null) => void;
   logout: () => Promise<void>;
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const recoverSession = async () => {
+      try {
+        const response = await api.get('/auth/me');
+        setUser(response.data);
+      } catch (error) {
+        // No active session or user inactive; fail silently
+      } finally {
+        setLoading(false);
+      }
+    };
+    recoverSession();
+  }, []);
 
   useEffect(() => {
     // Interceptor to handle global 401s (Scenario 2 of SMS-22)
@@ -50,7 +66,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, setUser, logout }}>
+    <AuthContext.Provider value={{ user, setUser, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );
