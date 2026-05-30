@@ -105,3 +105,72 @@
 * **Given** an Admin is creating a new user account,
 * **When** the payload contains a role that is not part of the allowed enum (Admin, Staff, Student),
 * **Then** the backend must reject the request and return a 400 Bad Request.
+
+---
+
+## SMS-4 Manage Staff profiles
+**As an** Admin, **I want to** manage (create, read, update, deactivate) staff profiles with their employee codes and departments, **so that** the school's employee directory is accurate.
+
+### Acceptance Criteria
+
+**Scenario 1: Linking a Staff Profile**
+* **Given** an Admin has successfully created a base User account with the 'Staff' role,
+* **When** they submit a unique employee_code, department, and the corresponding user object,
+* **Then** the backend must create the Staff profile linked to that User UUID,
+* **And** return a 201 Created status.
+
+**Scenario 2: Unique Employee Code Enforcement**
+* **Given** an Admin is creating or updating a Staff profile,
+* **When** they submit an employee_code that is already assigned to another staff member,
+* **Then** the backend must reject the payload and return a 409 Conflict status.
+
+---
+
+## SMS-5 Manage Student profiles
+**As an** Admin, **I want to** manage student profiles and their student codes, **so that** the school has accurate learner records.
+
+### Acceptance Criteria
+
+**Scenario 1: Linking a Student Profile**
+* **Given** an Admin has successfully created a base User account with the 'Student' role,
+* **When** they submit a unique student_code and the corresponding user object,
+* **Then** the backend must create the Student profile linked to that User UUID,
+* **And** return a 201 Created status.
+
+**Scenario 2: Unique Student Code Enforcement**
+* **Given** an Admin is creating or updating a Student profile,
+* **When** they submit a student_code that is already active in the system,
+* **Then** the backend must reject the payload and return a 409 Conflict status.
+
+---
+
+## SMS-6 Manage Subjects
+**As an** Admin, **I want to** create and update subjects in the curriculum catalog, **so that** staff can be assigned to teach them.
+
+### Acceptance Criteria
+
+**Scenario 1: Creating a Catalog Subject**
+* **Given** an Admin is authenticated and on the Academic configuration page,
+* **When** they submit a new subject payload including a name, unique code, and an integer value for credits,
+* **Then** the backend must save the new subject with a generated UUID,
+* **And** return a 201 Created status.
+
+**Scenario 2: Subject Code Clash**
+* **Given** an Admin is creating or updating a Subject,
+* **When** they input a subject code (e.g., "CS101") that already exists in the database,
+* **Then** the backend must return a 409 Conflict status,
+* **And** the frontend must prompt the Admin to choose a different code.
+
+---
+
+## SMS-7 Manage Rooms
+**As an** Admin, **I want to** manage rooms, including their capacities and whether they are a lab, **so that** physical infrastructure can be allocated correctly.
+
+### Acceptance Criteria
+
+**Scenario 1: Registering Infrastructure**
+* **Given** an Admin is authenticated and managing physical infrastructure,
+* **When** they submit a new room payload including a room_number, a capacity (integer), and a boolean for is_lab,
+* **Then** the backend must save the room with a generated UUID,
+* **And** return a 201 Created status.
+
