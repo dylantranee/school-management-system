@@ -8,6 +8,12 @@ CREATE TABLE Users (
 	password_hash VARCHAR(255) NOT NULL,
 	role ENUM('Admin', 'Staff', 'Student') NOT NULL,
 	is_active BOOLEAN DEFAULT TRUE,
+	failed_login_attempts INT DEFAULT 0,
+	locked_until DATETIME,
+	reset_token_hash VARCHAR(255),
+	reset_token_expires DATETIME,
+	activation_token_hash VARCHAR(255),
+	activation_token_expires DATETIME,
 	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 	updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 	created_by VARCHAR(50) DEFAULT 'NT',
@@ -36,11 +42,13 @@ CREATE TABLE Student (
 	student_last_name VARCHAR(100) NOT NULL,
 	enrollment_date DATE,
 	user_id VARCHAR(36) UNIQUE,
+	advisor_id VARCHAR(36),
 	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 	updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 	created_by VARCHAR(50) DEFAULT 'NT',
 	updated_by VARCHAR(50),
-	FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE SET NULL
+	FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE SET NULL,
+	FOREIGN KEY (advisor_id) REFERENCES Staff(id) ON DELETE SET NULL
 );
 
 CREATE TABLE Salary (
@@ -51,6 +59,7 @@ CREATE TABLE Salary (
 	net_salary DECIMAL(10, 2),
 	payment_month TINYINT CHECK (payment_month BETWEEN 1 AND 12) NOT NULL,
 	payment_year INT NOT NULL,
+	status ENUM('draft', 'disbursed') NOT NULL DEFAULT 'draft',
 	staff_id VARCHAR(36) NOT NULL,
 	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 	updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -65,6 +74,7 @@ CREATE TABLE Subject (
 	subject_code VARCHAR(100) UNIQUE NOT NULL,
 	subject_name VARCHAR(100) NOT NULL,
 	credits INT NOT NULL,
+	is_active BOOLEAN DEFAULT TRUE,
 	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 	updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 	created_by VARCHAR(50) DEFAULT 'NT',
@@ -121,6 +131,7 @@ CREATE TABLE Room (
 	room_number VARCHAR(50) UNIQUE NOT NULL,
 	capacity INT NOT NULL,
 	is_lab BOOLEAN DEFAULT FALSE,
+	is_active BOOLEAN DEFAULT TRUE,
 	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 	updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 	created_by VARCHAR(50) DEFAULT 'NT',
@@ -140,4 +151,15 @@ CREATE TABLE Schedule (
 	updated_by VARCHAR(50),
 	FOREIGN KEY (course_section_id) REFERENCES Course_Section(id) ON DELETE CASCADE,
 	FOREIGN KEY (room_id) REFERENCES Room(id) ON DELETE RESTRICT
+);
+
+CREATE TABLE Audit_Log (
+	id VARCHAR(36) PRIMARY KEY,
+	user_id VARCHAR(36) NOT NULL,
+	target_id VARCHAR(36),
+	action VARCHAR(100) NOT NULL,
+	old_value TEXT,
+	new_value TEXT,
+	ip_address VARCHAR(45),
+	timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
 );
