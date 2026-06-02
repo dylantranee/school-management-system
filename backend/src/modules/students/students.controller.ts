@@ -1,131 +1,69 @@
 import { Request, Response } from 'express';
-import prisma from '../../config/db';
 import { asyncHandler } from '../../utils/asyncHandler';
-import { ApiError } from '../../middlewares/errorHandler';
-import crypto from 'crypto';
+import { studentsService } from './students.service';
 
 export const createStudent = asyncHandler(async (req: Request, res: Response) => {
-  const { student_code, student_first_name, student_last_name, enrollment_date, userId } = req.body;
-
-  const existing = await prisma.student.findUnique({
-    where: { student_code }
-  });
-  if (existing) {
-    throw new ApiError(409, 'Student code already in use');
-  }
-
-  if (userId) {
-    const user = await prisma.users.findUnique({
-      where: { id: userId }
-    });
-    if (!user) {
-      throw new ApiError(400, 'Linked user not found');
-    }
-    const userAlreadyLinked = await prisma.student.findUnique({
-      where: { user_id: userId }
-    });
-    if (userAlreadyLinked) {
-      throw new ApiError(409, 'User is already linked to another student');
-    }
-  }
-
-  const student = await prisma.student.create({
-    data: {
-      id: crypto.randomUUID(),
-      student_code,
-      student_first_name,
-      student_last_name,
-      enrollment_date: enrollment_date ? new Date(enrollment_date) : null,
-      user_id: userId || null
-    }
-  });
-
+  const student = await studentsService.createStudent(req.body);
   res.status(201).json(student);
 });
 
 export const listStudents = asyncHandler(async (req: Request, res: Response) => {
-  const all = await prisma.student.findMany({
-    include: {
-      Users: {
-        select: {
-          email: true,
-          is_active: true,
-          role: true
-        }
-      }
-    }
-  });
+  const all = await studentsService.listStudents();
   res.json(all);
 });
 
 export const getStudent = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
-  const student = await prisma.student.findUnique({
-    where: { id },
-    include: {
-      Users: {
-        select: {
-          email: true,
-          is_active: true,
-          role: true
-        }
-      }
-    }
-  });
-  if (!student) {
-    throw new ApiError(404, 'Student not found');
-  }
+  const student = await studentsService.getStudent(id);
   res.json(student);
 });
 
 export const updateStudent = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { student_code, student_first_name, student_last_name, enrollment_date } = req.body;
-
-  const student = await prisma.student.findUnique({
-    where: { id }
-  });
-  if (!student) {
-    throw new ApiError(404, 'Student not found');
-  }
-
-  if (student_code && student_code !== student.student_code) {
-    const other = await prisma.student.findUnique({
-      where: { student_code }
-    });
-    if (other) {
-      throw new ApiError(409, 'Student code already in use');
-    }
-  }
-
-  const updated = await prisma.student.update({
-    where: { id },
-    data: {
-      student_code: student_code ?? student.student_code,
-      student_first_name: student_first_name ?? student.student_first_name,
-      student_last_name: student_last_name ?? student.student_last_name,
-      enrollment_date: enrollment_date ? new Date(enrollment_date) : student.enrollment_date
-    }
-  });
-
-  res.json(updated);
+  const student = await studentsService.updateStudent(id, req.body);
+  res.json(student);
 });
 
 export const deactivateStudent = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
-  const student = await prisma.student.findUnique({
-    where: { id }
+  const result = await studentsService.deactivateStudent(id);
+  res.json({
+    message: 'Student deactivated successfully',
+    ...result
   });
-  if (!student) {
-    throw new ApiError(404, 'Student not found');
-  }
+});
 
-  if (student.user_id) {
-    await prisma.users.update({
-      where: { id: student.user_id },
-      data: { is_active: false }
-    });
-  }
+export const reactivateStudent = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const student = await studentsService.reactivateStudent(id);
+  res.json({ message: 'Student reactivated successfully', student });
+});
 
-  res.json({ message: 'Student deactivated successfully', student });
+export const deleteStudent = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const result = await studentsService.deleteStudent(id);
+  res.json(result);
+});
+
+export const importStudentCSV = asyncHandler(async (req: Request, res: Response) => {
+  const { csvData } = req.body;
+  const result = await studentsService.importStudentCSV(csvData);
+  res.status(201).json({
+    message: 'CSV processing complete',
+    ...result
+  });
+});
+
+export const exportTimetablePDF = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const userId = req.user!.userId;
+  const userRole = req.user!.role;
+
+  const { doc, fileName } = await studentsService.exportTimetablePDF(id, userId, userRole);
+
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
+
+  doc.pipe(res);
+  doc.end();
 });
