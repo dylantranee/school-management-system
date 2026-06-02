@@ -16,3 +16,11 @@ export const signToken = (payload: JwtPayload): string => {
 export const verifyToken = (token: string): JwtPayload => {
   return jwt.verify(token, JWT_SECRET) as JwtPayload;
 };
+
+export const signTokenWithExpiry = (payload: any, expiresIn: any): string => {
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: expiresIn as any });
+};
+
+export const verifyTokenCustom = (token: string): any => {
+  return jwt.verify(token, JWT_SECRET);
+};
