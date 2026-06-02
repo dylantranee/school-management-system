@@ -1,6 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { Home, Users, LogOut } from 'lucide-react';
+import { Home, Users, LogOut, Calendar, Wallet, BookOpen } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -44,8 +44,42 @@ export const DashboardLayout = () => {
           </NavLink>
 
           {user?.role === 'Admin' && (
+            <>
+              <NavLink
+                to="/admin/users"
+                className={({ isActive }) =>
+                  cn(
+                    "flex items-center gap-3 px-3 py-2.5 rounded-md text-[14px] font-medium transition-colors",
+                    isActive 
+                      ? "bg-[#5e69d1]/10 text-[#5e69d1]" 
+                      : "text-muted-foreground hover:bg-secondary-foreground/5 hover:text-foreground"
+                  )
+                }
+              >
+                <Users size={18} />
+                User Management
+              </NavLink>
+
+              <NavLink
+                to="/admin/academic"
+                className={({ isActive }) =>
+                  cn(
+                    "flex items-center gap-3 px-3 py-2.5 rounded-md text-[14px] font-medium transition-colors",
+                    isActive 
+                      ? "bg-[#5e69d1]/10 text-[#5e69d1]" 
+                      : "text-muted-foreground hover:bg-secondary-foreground/5 hover:text-foreground"
+                  )
+                }
+              >
+                <Calendar size={18} />
+                Academic Config
+              </NavLink>
+            </>
+          )}
+
+          {user?.role === 'Student' && (
             <NavLink
-              to="/admin/users"
+              to="/student/register"
               className={({ isActive }) =>
                 cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-md text-[14px] font-medium transition-colors",
@@ -55,8 +89,25 @@ export const DashboardLayout = () => {
                 )
               }
             >
-              <Users size={18} />
-              User Management
+              <BookOpen size={18} />
+              Register Courses
+            </NavLink>
+          )}
+
+          {(user?.role === 'Admin' || user?.role === 'Student' || user?.role === 'Staff') && (
+            <NavLink
+              to="/financials"
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-md text-[14px] font-medium transition-colors",
+                  isActive 
+                    ? "bg-[#5e69d1]/10 text-[#5e69d1]" 
+                    : "text-muted-foreground hover:bg-secondary-foreground/5 hover:text-foreground"
+                )
+              }
+            >
+              <Wallet size={18} />
+              {user?.role === 'Staff' ? 'Payroll & Payslips' : 'Financials'}
             </NavLink>
           )}
         </nav>

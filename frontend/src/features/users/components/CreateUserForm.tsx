@@ -7,11 +7,6 @@ import { useCreateUser } from '../api/useCreateUser';
 
 const createUserSchema = z.object({
   email: z.string().email('Invalid email address format'),
-  password: z
-    .string()
-    .min(8, 'Password must be at least 8 characters long')
-    .regex(/[0-9]/, 'Password must contain at least one number')
-    .regex(/[^a-zA-Z0-9]/, 'Password must contain at least one special character'),
   role: z.enum(['Admin', 'Staff', 'Student'], {
     errorMap: () => ({ message: "Role must be 'Admin', 'Staff', or 'Student'" })
   })
@@ -19,33 +14,35 @@ const createUserSchema = z.object({
 
 export const CreateUserForm = () => {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [role, setRole] = useState('');
-  const [errors, setErrors] = useState<{ email?: string; password?: string; role?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; role?: string }>({});
+  const [activationLink, setActivationLink] = useState('');
   
   const createUserMutation = useCreateUser();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
+    setActivationLink('');
 
-    const result = createUserSchema.safeParse({ email, password, role });
+    const result = createUserSchema.safeParse({ email, role });
     if (!result.success) {
       const fieldErrors = result.error.flatten().fieldErrors;
       setErrors({
         email: fieldErrors.email?.[0],
-        password: fieldErrors.password?.[0],
         role: fieldErrors.role?.[0]
       });
       return;
     }
 
-    createUserMutation.mutate({ email, password, role }, {
-      onSuccess: () => {
+    createUserMutation.mutate({ email, role }, {
+      onSuccess: (data) => {
         // Reset form on success
         setEmail('');
-        setPassword('');
         setRole('');
+        if (data.activationToken) {
+          setActivationLink(`http://localhost:5173/activate?token=${data.activationToken}`);
+        }
       }
     });
   };
@@ -72,8 +69,19 @@ export const CreateUserForm = () => {
       </div>
 
       {isSuccess && !createUserMutation.isPending && (
-        <div className="p-3 rounded-md bg-[#5e69d1]/10 border border-[#5e69d1]/20 text-[#5e69d1] text-[14px]">
-          User account created successfully!
+        <div className="flex flex-col gap-2 p-3 rounded-md bg-[#5e69d1]/10 border border-[#5e69d1]/20 text-[#5e69d1] text-[14px]">
+          <span>User account created successfully!</span>
+          {activationLink && (
+            <div className="mt-1 flex flex-col gap-1">
+              <span className="text-[12px] font-semibold text-muted-foreground">Activation Link (Mock Email):</span>
+              <input 
+                type="text" 
+                readOnly 
+                value={activationLink}
+                className="w-full bg-background border border-border rounded px-2 py-1 text-[12px] font-mono select-all text-foreground"
+              />
+            </div>
+          )}
         </div>
       )}
 
@@ -92,17 +100,7 @@ export const CreateUserForm = () => {
           onChange={(e) => setEmail(e.target.value)}
           error={errors.email}
           disabled={isLoading}
-          autoComplete="new-email" // specific hint to avoid autofilling saved logins
-        />
-        <Input 
-          label="Password"
-          type="password" 
-          placeholder="Password" 
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          error={errors.password}
-          disabled={isLoading}
-          autoComplete="new-password" // strongly hints to the browser not to autofill this
+          autoComplete="new-email"
         />
         <Select
           label="Role"
