@@ -41,7 +41,11 @@ export const LoginForm = () => {
         
         // Scenario 1 & 6: Redirect
         const params = new URLSearchParams(window.location.search);
-        const redirect = params.get('redirect') || '/dashboard';
+        const defaultRedirect = 
+          data.user.role === 'Admin' ? '/admin/users' :
+          data.user.role === 'Student' ? '/student/register' :
+          '/staff/timetable';
+        const redirect = params.get('redirect') || defaultRedirect;
         navigate(redirect);
       }
     });

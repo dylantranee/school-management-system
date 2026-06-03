@@ -1,6 +1,22 @@
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
 import { LoginForm } from '@/features/auth/components/LoginForm';
 
 export const LoginPage = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      const defaultRedirect = 
+        user.role === 'Admin' ? '/admin/users' :
+        user.role === 'Student' ? '/student/register' :
+        '/staff/timetable';
+      navigate(defaultRedirect, { replace: true });
+    }
+  }, [user, navigate]);
+
   return (
     <div className="min-h-screen bg-background flex flex-col md:flex-row">
       {/* Left side: The form */}

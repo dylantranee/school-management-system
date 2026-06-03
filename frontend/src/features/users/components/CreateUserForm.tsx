@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
-import { useCreateUser } from '../api/useCreateUser';
+import { useCreateUser } from '../api/users.hooks';
 
 const createUserSchema = z.object({
   email: z.string().email('Invalid email address format'),

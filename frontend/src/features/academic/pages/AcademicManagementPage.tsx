@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
-import { Calendar, Layers, Plus, Upload, Trash2, ShieldAlert } from 'lucide-react';
+import { Calendar, Layers, Plus, Upload, Trash2, ShieldAlert, Settings } from 'lucide-react';
 import {
   useCourseSections,
   useSchedules,
@@ -13,11 +13,13 @@ import {
   useDeleteSectionMutation,
   useCreateScheduleMutation,
   useDeleteScheduleMutation,
-  useImportCsvMutation
+  useImportCsvMutation,
+  useSystemSettings,
+  useUpdateSettingMutation
 } from '../api/academic.hooks';
 
 export const AcademicManagementPage = () => {
-  const [activeTab, setActiveTab] = useState<'sections' | 'schedules' | 'import'>('sections');
+  const [activeTab, setActiveTab] = useState<'sections' | 'schedules' | 'import' | 'settings'>('sections');
   
   // Queries
   const { data: sections = [] } = useCourseSections();
@@ -25,6 +27,7 @@ export const AcademicManagementPage = () => {
   const { data: rooms = [] } = useRooms();
   const { data: subjects = [] } = useSubjects();
   const { data: staff = [] } = useStaff();
+  const { data: settings = [] } = useSystemSettings();
 
   // Mutations
   const createSectionMutation = useCreateSectionMutation();
@@ -32,6 +35,18 @@ export const AcademicManagementPage = () => {
   const createScheduleMutation = useCreateScheduleMutation();
   const deleteScheduleMutation = useDeleteScheduleMutation();
   const importCsvMutation = useImportCsvMutation();
+  const updateSettingMutation = useUpdateSettingMutation();
+
+  const handleUpdateSetting = async (key: string, value: string) => {
+    setErrorMsg('');
+    setSuccessMsg('');
+    try {
+      await updateSettingMutation.mutateAsync({ key, value });
+      setSuccessMsg(`Setting ${key} updated successfully!`);
+    } catch (err: any) {
+      setErrorMsg(err.response?.data?.message || `Failed to update ${key}.`);
+    }
+  };
 
   // Form states
   const [sectionForm, setSectionForm] = useState({
@@ -212,6 +227,13 @@ export const AcademicManagementPage = () => {
           <Upload size={16} />
           Bulk CSV Import
         </button>
+        <button
+          onClick={() => { setActiveTab('settings'); setErrorMsg(''); setSuccessMsg(''); }}
+          className={`flex items-center gap-2 px-4 py-2 text-[14px] font-medium rounded-md transition-colors ${activeTab === 'settings' ? 'bg-[#5e69d1]/10 text-[#5e69d1]' : 'text-muted-foreground hover:bg-secondary-foreground/5 hover:text-foreground'}`}
+        >
+          <Settings size={16} />
+          System Settings
+        </button>
       </div>
 
       {successMsg && (
@@ -247,7 +269,7 @@ export const AcademicManagementPage = () => {
                   {sections.map((s: any) => (
                     <tr key={s.id} className="border-b border-border/50 hover:bg-background/40 transition-colors">
                       <td className="py-3 font-medium">{s.Subject?.subject_name} ({s.Subject?.subject_code})</td>
-                      <td className="py-3">S{s.semester} / {s.academic_year}</td>
+                      <td className="py-3">S{s.semester?.replace('SEMESTER_', '')} / {s.academic_year}</td>
                       <td className="py-3 font-mono">{s.section_number}</td>
                       <td className="py-3">{s.Staff?.staff_first_name} {s.Staff?.staff_last_name}</td>
                       <td className="py-3">{s._count?.Student_Enrollment || 0} / {s.max_capacity}</td>
@@ -575,6 +597,58 @@ export const AcademicManagementPage = () => {
                 </p>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* System Settings Tab */}
+      {activeTab === 'settings' && (
+        <div className="max-w-[640px] bg-secondary border border-border rounded-[12px] p-6 shadow-sm space-y-6">
+          <h3 className="font-display font-medium text-[18px] mb-4 flex items-center gap-2">
+            <Settings size={18} className="text-[#5e6ad2]" />
+            Global System Configurations
+          </h3>
+
+          <div className="space-y-4">
+            {settings.map((s: any) => (
+              <div key={s.key} className="border-b border-border/50 pb-4 last:border-b-0 last:pb-0 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div className="flex-1">
+                  <span className="block font-mono text-[13px] font-semibold text-foreground uppercase">{s.key.replace(/_/g, ' ')}</span>
+                  <span className="block text-[12px] text-muted-foreground mt-0.5">{s.description || 'Global policy parameter.'}</span>
+                </div>
+                <div className="flex gap-2 items-center w-full md:w-auto">
+                  {s.key === 'CURRENT_SEMESTER' ? (
+                    <select
+                      defaultValue={s.value}
+                      onChange={(e) => handleUpdateSetting(s.key, e.target.value)}
+                      disabled={updateSettingMutation.isPending}
+                      className="bg-background border border-border rounded px-3 py-1.5 text-[14px] font-sans text-foreground focus:outline-none focus:border-[#5e6ad2] w-full md:w-[150px]"
+                    >
+                      <option value="1">Semester 1</option>
+                      <option value="2">Semester 2</option>
+                      <option value="3">Semester 3</option>
+                    </select>
+                  ) : (
+                    <input
+                      type={s.key.includes('DATE') ? 'date' : 'text'}
+                      defaultValue={s.value}
+                      onBlur={(e) => {
+                        if (e.target.value !== s.value) {
+                          handleUpdateSetting(s.key, e.target.value);
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleUpdateSetting(s.key, e.currentTarget.value);
+                        }
+                      }}
+                      disabled={updateSettingMutation.isPending}
+                      className="bg-background border border-border rounded px-3 py-1.5 text-[14px] font-mono text-foreground focus:outline-none focus:border-[#5e6ad2] w-full md:w-[200px]"
+                    />
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}

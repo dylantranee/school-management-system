@@ -9,8 +9,11 @@ export const RoleRoute = ({ children, allowedRoles }: { children: JSX.Element, a
   }
 
   if (!allowedRoles.includes(user.role)) {
-    // If they don't have access, bounce them back to their dashboard (or a generic 403 page)
-    return <Navigate to="/dashboard" replace />;
+    const fallback = 
+      user.role === 'Admin' ? '/admin/users' :
+      user.role === 'Student' ? '/student/register' :
+      '/staff/timetable';
+    return <Navigate to={fallback} replace />;
   }
 
   return children;

@@ -15,12 +15,21 @@ import {
 
 export const FinancialsManagementPage = () => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'fees' | 'payroll'>('fees');
+  const [activeTab, setActiveTab] = useState<'fees' | 'payroll'>(user?.role === 'Staff' ? 'payroll' : 'fees');
+
+  const [feesPage, setFeesPage] = useState(1);
+  const [salariesPage, setSalariesPage] = useState(1);
 
   // Queries
-  const { data: fees = [] } = useFees();
-  const { data: salaries = [] } = useSalaries(user?.role);
+  const { data: feesData } = useFees({ page: feesPage, limit: 10 });
+  const { data: salariesData } = useSalaries(user?.role, { page: salariesPage, limit: 10 });
   const { data: staff = [] } = useStaff(user?.role);
+
+  const fees = feesData?.fees || [];
+  const feesPagination = feesData?.pagination || { totalPages: 1, totalCount: 0 };
+
+  const salaries = salariesData?.salaries || [];
+  const salariesPagination = salariesData?.pagination || { totalPages: 1, totalCount: 0 };
 
   // Mutations
   const generateBillingMutation = useGenerateBillingMutation();
@@ -197,9 +206,9 @@ export const FinancialsManagementPage = () => {
                           {f.Student?.student_first_name} {f.Student?.student_last_name} ({f.Student?.student_code})
                         </td>
                       )}
-                      <td className="py-3 font-mono font-semibold">${Number(f.amount_due).toFixed(2)}</td>
-                      <td className="py-3 font-mono text-muted-foreground">${Number(f.amount_paid || 0).toFixed(2)}</td>
-                      <td className="py-3 font-mono">{new Date(f.due_date).toLocaleDateString()}</td>
+                      <td className="py-3 font-semibold font-sans">${Number(f.amount_due).toFixed(2)}</td>
+                      <td className="py-3 text-muted-foreground font-sans">${Number(f.amount_paid || 0).toFixed(2)}</td>
+                      <td className="py-3 font-sans">{new Date(f.due_date).toLocaleDateString()}</td>
                       <td className="py-3">
                         {f.payment_status === 'paid' && (
                           <span className="flex items-center gap-1 w-fit px-2 py-0.5 rounded-full bg-green-50 border border-green-200 text-green-600 text-[11px] font-semibold">
@@ -239,6 +248,76 @@ export const FinancialsManagementPage = () => {
                 </tbody>
               </table>
             </div>
+
+            {/* Fees Pagination controls */}
+            {feesPagination.totalPages > 1 && (
+              <div className="flex justify-center items-center gap-4 mt-6 pt-4 border-t border-border">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <Button
+                    variant="secondary"
+                    className="py-1 px-2.5 text-[12px] h-8"
+                    onClick={() => setFeesPage(p => Math.max(1, p - 1))}
+                    disabled={feesPage === 1}
+                  >
+                    Previous
+                  </Button>
+
+                  {/* Page Numbers */}
+                  {(() => {
+                    const pages = [];
+                    const total = feesPagination.totalPages;
+                    const current = feesPage;
+                    const maxVisible = 5;
+
+                    if (total <= maxVisible) {
+                      for (let i = 1; i <= total; i++) pages.push(i);
+                    } else {
+                      pages.push(1);
+                      if (current > 3) pages.push('...');
+                      const start = Math.max(2, current - 1);
+                      const end = Math.min(total - 1, current + 1);
+                      for (let i = start; i <= end; i++) {
+                        if (!pages.includes(i)) pages.push(i);
+                      }
+                      if (current < total - 2) pages.push('...');
+                      if (!pages.includes(total)) pages.push(total);
+                    }
+
+                    return pages.map((page, index) => {
+                      if (page === '...') {
+                        return (
+                          <span key={`ell-${index}`} className="px-2 text-muted-foreground text-[13px]">
+                            ...
+                          </span>
+                        );
+                      }
+                      return (
+                        <button
+                          key={`page-${page}`}
+                          onClick={() => setFeesPage(Number(page))}
+                          className={`w-8 h-8 flex items-center justify-center rounded text-[13px] font-medium transition-all ${
+                            current === page
+                              ? 'bg-[#5e6ad2] text-white font-bold shadow-sm'
+                              : 'text-muted-foreground hover:bg-secondary-foreground/5 hover:text-foreground'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      );
+                    });
+                  })()}
+
+                  <Button
+                    variant="secondary"
+                    className="py-1 px-2.5 text-[12px] h-8"
+                    onClick={() => setFeesPage(p => Math.min(feesPagination.totalPages, p + 1))}
+                    disabled={feesPage === feesPagination.totalPages}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Admin Invoice Generation Form */}
@@ -324,11 +403,11 @@ export const FinancialsManagementPage = () => {
                           {s.Staff?.staff_first_name} {s.Staff?.staff_last_name} ({s.Staff?.employee_code})
                         </td>
                       )}
-                      <td className="py-3 font-mono">{s.payment_month}/{s.payment_year}</td>
-                      <td className="py-3 font-mono">${Number(s.base_salary).toFixed(2)}</td>
-                      <td className="py-3 font-mono text-green-600">+${Number(s.allowances || 0).toFixed(2)}</td>
-                      <td className="py-3 font-mono text-red-500">-${Number(s.deductions || 0).toFixed(2)}</td>
-                      <td className="py-3 font-mono font-bold text-[#5e6ad2]">${Number(s.net_salary).toFixed(2)}</td>
+                      <td className="py-3 font-sans">{s.payment_month}/{s.payment_year}</td>
+                      <td className="py-3 font-sans">${Number(s.base_salary).toFixed(2)}</td>
+                      <td className="py-3 font-sans text-green-600">+${Number(s.allowances || 0).toFixed(2)}</td>
+                      <td className="py-3 font-sans text-red-500">-${Number(s.deductions || 0).toFixed(2)}</td>
+                      <td className="py-3 font-sans font-bold text-[#5e6ad2]">${Number(s.net_salary).toFixed(2)}</td>
                     </tr>
                   ))}
                   {salaries.length === 0 && (
@@ -339,6 +418,76 @@ export const FinancialsManagementPage = () => {
                 </tbody>
               </table>
             </div>
+
+            {/* Salaries Pagination controls */}
+            {salariesPagination.totalPages > 1 && (
+              <div className="flex justify-center items-center gap-4 mt-6 pt-4 border-t border-border">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <Button
+                    variant="secondary"
+                    className="py-1 px-2.5 text-[12px] h-8"
+                    onClick={() => setSalariesPage(p => Math.max(1, p - 1))}
+                    disabled={salariesPage === 1}
+                  >
+                    Previous
+                  </Button>
+
+                  {/* Page Numbers */}
+                  {(() => {
+                    const pages = [];
+                    const total = salariesPagination.totalPages;
+                    const current = salariesPage;
+                    const maxVisible = 5;
+
+                    if (total <= maxVisible) {
+                      for (let i = 1; i <= total; i++) pages.push(i);
+                    } else {
+                      pages.push(1);
+                      if (current > 3) pages.push('...');
+                      const start = Math.max(2, current - 1);
+                      const end = Math.min(total - 1, current + 1);
+                      for (let i = start; i <= end; i++) {
+                        if (!pages.includes(i)) pages.push(i);
+                      }
+                      if (current < total - 2) pages.push('...');
+                      if (!pages.includes(total)) pages.push(total);
+                    }
+
+                    return pages.map((page, index) => {
+                      if (page === '...') {
+                        return (
+                          <span key={`ell-${index}`} className="px-2 text-muted-foreground text-[13px]">
+                            ...
+                          </span>
+                        );
+                      }
+                      return (
+                        <button
+                          key={`page-${page}`}
+                          onClick={() => setSalariesPage(Number(page))}
+                          className={`w-8 h-8 flex items-center justify-center rounded text-[13px] font-medium transition-all ${
+                            current === page
+                              ? 'bg-[#5e6ad2] text-white font-bold shadow-sm'
+                              : 'text-muted-foreground hover:bg-secondary-foreground/5 hover:text-foreground'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      );
+                    });
+                  })()}
+
+                  <Button
+                    variant="secondary"
+                    className="py-1 px-2.5 text-[12px] h-8"
+                    onClick={() => setSalariesPage(p => Math.min(salariesPagination.totalPages, p + 1))}
+                    disabled={salariesPage === salariesPagination.totalPages}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Admin Payslip Generation Form */}

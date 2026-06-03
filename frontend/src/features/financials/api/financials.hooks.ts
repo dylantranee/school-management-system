@@ -2,21 +2,21 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/axios';
 
 // Queries
-export const useFees = () => {
+export const useFees = (params?: { page?: number; limit?: number }) => {
   return useQuery({
-    queryKey: ['fees'],
+    queryKey: ['fees', params],
     queryFn: async () => {
-      const response = await api.get('/fees');
+      const response = await api.get('/fees', { params });
       return response.data;
     }
   });
 };
 
-export const useSalaries = (role?: string) => {
+export const useSalaries = (role?: string, params?: { page?: number; limit?: number }) => {
   return useQuery({
-    queryKey: ['salaries'],
+    queryKey: ['salaries', role, params],
     queryFn: async () => {
-      const response = await api.get('/salaries');
+      const response = await api.get('/salaries', { params });
       return response.data;
     },
     enabled: role !== 'Student'
