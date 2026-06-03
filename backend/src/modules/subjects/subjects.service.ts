@@ -141,10 +141,11 @@ export const subjectsService = {
     const currentSemester = await getSetting('CURRENT_SEMESTER');
     const currentAcademicYear = await getSetting('CURRENT_ACADEMIC_YEAR');
     const currentYearNum = parseInt(currentAcademicYear, 10);
+    const expectedEnumSemester = currentSemester.startsWith('SEMESTER_') ? currentSemester : `SEMESTER_${currentSemester}`;
 
     // Check if subject is referenced by active course sections in current term
     const activeSections = subject.Course_Section.filter(
-      cs => cs.semester === currentSemester && cs.academic_year === currentYearNum
+      cs => cs.semester === expectedEnumSemester && cs.academic_year === currentYearNum
     );
 
     if (activeSections.length > 0) {

@@ -11,8 +11,12 @@ export const generateSemesterFees = asyncHandler(async (req: Request, res: Respo
 export const listFees = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user!.userId;
   const userRole = req.user!.role;
+  const { page, limit } = req.query;
 
-  const result = await feesService.listFees(userId, userRole);
+  const result = await feesService.listFees(userId, userRole, {
+    page: page ? Number(page) : undefined,
+    limit: limit ? Number(limit) : undefined
+  });
   res.json(result);
 });
 

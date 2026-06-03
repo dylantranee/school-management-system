@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createStudent, listStudents, getStudent, updateStudent, deactivateStudent, reactivateStudent, deleteStudent, importStudentCSV, exportTimetablePDF } from './students.controller';
+import { createStudent, listStudents, getStudent, updateStudent, deactivateStudent, reactivateStudent, deleteStudent, importStudentCSV } from './students.controller';
 import { requireAuth } from '../../middlewares/requireAuth';
 import { requireRole } from '../../middlewares/requireRole';
 import { validateRequest } from '../../middlewares/validateRequest';
@@ -9,7 +9,6 @@ const router = Router();
 
 // Read operations: Allowed for authenticated users
 router.get('/', requireAuth, listStudents);
-router.get('/:id/timetable/export', requireAuth, exportTimetablePDF);
 router.get('/:id', requireAuth, getStudent);
 
 // Write operations: Restricted to Admin

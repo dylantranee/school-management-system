@@ -7,8 +7,8 @@ import { updateSettingSchema } from './systemSettings.schema';
 
 const router = Router();
 
-// Retrieve all system configurations (Admin-only)
-router.get('/', requireAuth, requireRole(['Admin']), listSettings);
+// Retrieve all system configurations (authenticated users)
+router.get('/', requireAuth, listSettings);
 
 // Update a system configuration (Admin-only)
 router.put('/:key', requireAuth, requireRole(['Admin']), validateRequest(updateSettingSchema), updateSetting);

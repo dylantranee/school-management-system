@@ -103,9 +103,19 @@ export const authService = {
 
     const { password_hash, reset_token_hash, reset_token_expires, activation_token_hash, activation_token_expires, ...userWithoutPassword } = user;
 
+    let profile: any = null;
+    if (user.role === 'Student') {
+      profile = await prisma.student.findUnique({ where: { user_id: user.id } });
+    } else if (user.role === 'Staff') {
+      profile = await prisma.staff.findUnique({ where: { user_id: user.id } });
+    }
+
     return {
       token,
-      user: userWithoutPassword
+      user: {
+        ...userWithoutPassword,
+        profile
+      }
     };
   },
 
@@ -126,7 +136,18 @@ export const authService = {
     }
 
     const { password_hash, reset_token_hash, reset_token_expires, activation_token_hash, activation_token_expires, ...userWithoutPassword } = user;
-    return userWithoutPassword;
+
+    let profile: any = null;
+    if (user.role === 'Student') {
+      profile = await prisma.student.findUnique({ where: { user_id: userId } });
+    } else if (user.role === 'Staff') {
+      profile = await prisma.staff.findUnique({ where: { user_id: userId } });
+    }
+
+    return {
+      ...userWithoutPassword,
+      profile
+    };
   },
 
   /**

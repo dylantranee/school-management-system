@@ -49,7 +49,9 @@ async function seedSystemSettings() {
     { key: 'CURRENT_SEMESTER', value: '1', description: 'The current active semester (1, 2, or 3)' },
     { key: 'MAX_SEMESTER_CREDITS', value: '20', description: 'Maximum credits a student is allowed to enroll in per semester' },
     { key: 'REGISTRATION_START_DATE', value: '2026-05-01', description: 'The start date for course registration window (YYYY-MM-DD)' },
-    { key: 'REGISTRATION_END_DATE', value: '2026-06-30', description: 'The end date for course registration window (YYYY-MM-DD)' }
+    { key: 'REGISTRATION_END_DATE', value: '2026-06-30', description: 'The end date for course registration window (YYYY-MM-DD)' },
+    { key: 'SEMESTER_START_DATE', value: '2026-09-07', description: 'The start date of the active semester (YYYY-MM-DD)' },
+    { key: 'SEMESTER_END_DATE', value: '2027-01-15', description: 'The end date of the active semester (YYYY-MM-DD)' }
   ];
 
   try {

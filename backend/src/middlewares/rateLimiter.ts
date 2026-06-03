@@ -43,7 +43,19 @@ export const rateLimiter = (options: RateLimiterOptions) => {
       rateLimitStore.set(key, record);
 
       if (record.count > options.max) {
-        return next(new ApiError(429, options.message));
+        const msLeft = record.resetTime - now;
+        const secondsLeft = Math.ceil(msLeft / 1000);
+        let timeString = `${secondsLeft} second${secondsLeft !== 1 ? 's' : ''}`;
+        if (secondsLeft >= 60) {
+          const minutesLeft = Math.ceil(secondsLeft / 60);
+          timeString = `${minutesLeft} minute${minutesLeft !== 1 ? 's' : ''}`;
+        }
+        const refinedMessage = `${options.message} Please try again in ${timeString}.`;
+        
+        // Set standard Retry-After header
+        res.setHeader('Retry-After', secondsLeft.toString());
+        
+        return next(new ApiError(429, refinedMessage));
       }
     }
 

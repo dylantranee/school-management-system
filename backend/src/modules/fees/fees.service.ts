@@ -96,33 +96,75 @@ export const feesService = {
   /**
    * List all fees scoped by active role permissions.
    */
-  async listFees(userId: string, userRole: string) {
+  async listFees(userId: string, userRole: string, query: { page?: number; limit?: number } = {}) {
+    const page = Number(query.page) || 1;
+    const limit = Number(query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    let whereClause: any = {};
+
     // Students can only view their own fees
     if (userRole === 'Student') {
       const student = await prisma.student.findUnique({ where: { user_id: userId } });
       if (!student) {
         throw new ApiError(400, 'Student profile not found');
       }
-      return prisma.fee.findMany({
-        where: { student_id: student.id },
-        orderBy: { due_date: 'desc' }
-      });
+      whereClause.student_id = student.id;
+    }
+
+    if (userRole === 'Student') {
+      const [fees, totalCount] = await Promise.all([
+        prisma.fee.findMany({
+          where: whereClause,
+          orderBy: { due_date: 'desc' },
+          skip,
+          take: limit
+        }),
+        prisma.fee.count({ where: whereClause })
+      ]);
+      const totalPages = Math.ceil(totalCount / limit);
+      return {
+        fees,
+        pagination: {
+          totalCount,
+          totalPages,
+          currentPage: page,
+          limit
+        }
+      };
     }
 
     // Admins/Staff can list all fees
-    return prisma.fee.findMany({
-      include: {
-        Student: {
-          select: {
-            id: true,
-            student_code: true,
-            student_first_name: true,
-            student_last_name: true
+    const [fees, totalCount] = await Promise.all([
+      prisma.fee.findMany({
+        where: whereClause,
+        include: {
+          Student: {
+            select: {
+              id: true,
+              student_code: true,
+              student_first_name: true,
+              student_last_name: true
+            }
           }
-        }
-      },
-      orderBy: { due_date: 'desc' }
-    });
+        },
+        orderBy: { due_date: 'desc' },
+        skip,
+        take: limit
+      }),
+      prisma.fee.count({ where: whereClause })
+    ]);
+
+    const totalPages = Math.ceil(totalCount / limit);
+    return {
+      fees,
+      pagination: {
+        totalCount,
+        totalPages,
+        currentPage: page,
+        limit
+      }
+    };
   },
 
   /**

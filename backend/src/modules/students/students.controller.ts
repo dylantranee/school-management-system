@@ -54,16 +54,3 @@ export const importStudentCSV = asyncHandler(async (req: Request, res: Response)
   });
 });
 
-export const exportTimetablePDF = asyncHandler(async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const userId = req.user!.userId;
-  const userRole = req.user!.role;
-
-  const { doc, fileName } = await studentsService.exportTimetablePDF(id, userId, userRole);
-
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
-
-  doc.pipe(res);
-  doc.end();
-});

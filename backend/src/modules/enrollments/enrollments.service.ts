@@ -67,8 +67,9 @@ export const enrollmentService = {
       // C. Active Term Enforcement
       const currentSemester = await getSetting('CURRENT_SEMESTER');
       const currentAcademicYear = await getSetting('CURRENT_ACADEMIC_YEAR');
+      const expectedEnumSemester = currentSemester.startsWith('SEMESTER_') ? currentSemester : `SEMESTER_${currentSemester}`;
       
-      if (section.semester !== currentSemester || section.academic_year !== parseInt(currentAcademicYear, 10)) {
+      if (section.semester !== expectedEnumSemester || section.academic_year !== parseInt(currentAcademicYear, 10)) {
         throw new ApiError(400, `Registration is only allowed for the active term (Semester ${currentSemester}, Year ${currentAcademicYear}).`);
       }
 
@@ -239,7 +240,7 @@ export const enrollmentService = {
   /**
    * Update the status of an enrollment (e.g. approve/decline).
    */
-  async updateEnrollmentStatus(id: string, status: string, userId: string, userRole: string) {
+  async updateEnrollmentStatus(id: string, status: string, userId: string, userRole: string, comment?: string) {
     const enrollment = await prisma.student_Enrollment.findUnique({
       where: { id },
       include: {
@@ -252,17 +253,12 @@ export const enrollmentService = {
       throw new ApiError(404, 'Enrollment record not found');
     }
 
-    // Advisor-only approval check
+    // Advisor-only approval check (Admin fallback removed)
     if (userRole === 'Staff') {
       const staff = await prisma.staff.findUnique({
         where: { user_id: userId }
       });
       if (!staff || staff.id !== enrollment.Student.advisor_id) {
-        throw new ApiError(403, "Permission denied. Only the student's designated academic advisor can approve or decline their enrollment.");
-      }
-    } else if (userRole === 'Admin') {
-      // Admin fallback only allowed if advisor is null/missing
-      if (enrollment.Student.advisor_id) {
         throw new ApiError(403, "Permission denied. Only the student's designated academic advisor can approve or decline their enrollment.");
       }
     } else {
@@ -273,6 +269,7 @@ export const enrollmentService = {
       where: { id },
       data: {
         enrollment_status: status as any,
+        comment: comment || null,
         updated_by: userId
       }
     });

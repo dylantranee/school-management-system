@@ -11,20 +11,12 @@ export const createSalary = asyncHandler(async (req: Request, res: Response) => 
 export const listSalaries = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user!.userId;
   const userRole = req.user!.role;
-  const salaries = await salariesService.listSalaries(userId, userRole);
+  const { page, limit } = req.query;
+
+  const salaries = await salariesService.listSalaries(userId, userRole, {
+    page: page ? Number(page) : undefined,
+    limit: limit ? Number(limit) : undefined
+  });
   res.json(salaries);
 });
 
-export const exportPayslipPDF = asyncHandler(async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const userId = req.user!.userId;
-  const userRole = req.user!.role;
-
-  const { doc, fileName } = await salariesService.exportPayslipPDF(id, userId, userRole);
-
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
-
-  doc.pipe(res);
-  doc.end();
-});

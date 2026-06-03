@@ -10,6 +10,7 @@ export const updateEnrollmentStatusSchema = z.object({
   body: z.object({
     status: z.enum(['approving', 'pending', 'declining'], {
       errorMap: () => ({ message: "Status must be 'approving', 'pending', or 'declining'" })
-    })
+    }),
+    comment: z.string().optional()
   })
 });

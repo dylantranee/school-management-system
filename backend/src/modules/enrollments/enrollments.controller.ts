@@ -20,11 +20,11 @@ export const listEnrollments = asyncHandler(async (req: Request, res: Response) 
 
 export const updateEnrollmentStatus = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { status } = req.body;
+  const { status, comment } = req.body;
   const userId = req.user!.userId;
   const userRole = req.user!.role;
 
-  const result = await enrollmentService.updateEnrollmentStatus(id, status, userId, userRole);
+  const result = await enrollmentService.updateEnrollmentStatus(id, status, userId, userRole, comment);
   res.json(result);
 });
 

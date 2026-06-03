@@ -21,8 +21,9 @@ export const listUsers = asyncHandler(async (req: Request, res: Response) => {
   const search = req.query.search as string || '';
   const role = req.query.role as string || '';
   const is_active = req.query.is_active as string || '';
+  const status = req.query.status as string || '';
 
-  const result = await usersService.listUsers({ page, limit, search, role, is_active });
+  const result = await usersService.listUsers({ page, limit, search, role, is_active, status });
   res.status(200).json(result);
 });
 

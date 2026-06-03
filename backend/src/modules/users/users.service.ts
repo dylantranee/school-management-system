@@ -63,12 +63,13 @@ export const usersService = {
   /**
    * List paginated users with filtering.
    */
-  async listUsers(query: { page?: number; limit?: number; search?: string; role?: string; is_active?: string }) {
+  async listUsers(query: { page?: number; limit?: number; search?: string; role?: string; is_active?: string; status?: string }) {
     const page = query.page || 1;
     const limit = query.limit || 20;
     const search = query.search || '';
     const role = query.role || '';
     const is_active = query.is_active || '';
+    const status = query.status || '';
 
     const skip = (page - 1) * limit;
     const where: any = {};
@@ -83,7 +84,17 @@ export const usersService = {
       where.role = role;
     }
 
-    if (is_active !== '') {
+    if (status) {
+      if (status === 'Active') {
+        where.is_active = true;
+      } else if (status === 'Inactive') {
+        where.is_active = false;
+        where.activation_token_hash = null;
+      } else if (status === 'Pending') {
+        where.is_active = false;
+        where.activation_token_hash = { not: null };
+      }
+    } else if (is_active !== '') {
       where.is_active = is_active === 'true';
     }
 

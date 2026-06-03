@@ -198,10 +198,11 @@ export const staffService = {
     const currentSemester = await getSetting('CURRENT_SEMESTER');
     const currentAcademicYear = await getSetting('CURRENT_ACADEMIC_YEAR');
     const currentYearNum = parseInt(currentAcademicYear, 10);
+    const expectedEnumSemester = currentSemester.startsWith('SEMESTER_') ? currentSemester : `SEMESTER_${currentSemester}`;
 
     // Check if they teach any active course section in the current term
     const activeSections = staff.Course_Section.filter(
-      cs => cs.semester === currentSemester && cs.academic_year === currentYearNum
+      cs => cs.semester === expectedEnumSemester && cs.academic_year === currentYearNum
     );
 
     if (activeSections.length > 0) {

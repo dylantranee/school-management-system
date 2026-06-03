@@ -12,11 +12,15 @@ export const validateRequest = (schema: AnyZodObject) => {
         params: req.params,
       });
 
-      // Optional: re-assign req.body/query/params to the strictly typed parsed data
-      // This is helpful if the schema applies transformations or default values
-      req.body = parsedData.body;
-      req.query = parsedData.query;
-      req.params = parsedData.params;
+      if (parsedData.body !== undefined) {
+        req.body = parsedData.body;
+      }
+      if (parsedData.query !== undefined) {
+        req.query = parsedData.query;
+      }
+      if (parsedData.params !== undefined) {
+        req.params = parsedData.params;
+      }
 
       next();
     } catch (error) {

@@ -11,7 +11,6 @@ import schedulesRoutes from '../modules/schedules/schedules.routes';
 import enrollmentsRoutes from '../modules/enrollments/enrollments.routes';
 import feesRoutes from '../modules/fees/fees.routes';
 import salariesRoutes from '../modules/salaries/salaries.routes';
-import dashboardRoutes from '../modules/dashboard/dashboard.routes';
 import { sanitizeBody } from '../middlewares/sanitizeBody';
 
 const apiRouter = Router();
@@ -32,6 +31,5 @@ apiRouter.use('/schedules', schedulesRoutes);
 apiRouter.use('/enrollments', enrollmentsRoutes);
 apiRouter.use('/fees', feesRoutes);
 apiRouter.use('/salaries', salariesRoutes);
-apiRouter.use('/dashboard', dashboardRoutes);
 
 export default apiRouter;

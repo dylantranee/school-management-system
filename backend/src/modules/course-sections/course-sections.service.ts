@@ -81,11 +81,98 @@ export const courseSectionService = {
     });
   },
 
-  /**
-   * List all course sections with details.
-   */
-  async listCourseSections() {
+  async listCourseSections(query?: { page?: number; limit?: number; semester?: string; academic_year?: number; search?: string }) {
+    const page = query?.page ? Number(query.page) : undefined;
+    const limit = query?.limit ? Number(query.limit) : undefined;
+    const semester = query?.semester;
+    const academic_year = query?.academic_year;
+    const search = query?.search;
+
+    const where: any = {};
+    if (semester !== undefined) {
+      if (semester === '1' || semester === 'SEMESTER_1') {
+        where.semester = 'SEMESTER_1';
+      } else if (semester === '2' || semester === 'SEMESTER_2') {
+        where.semester = 'SEMESTER_2';
+      } else if (semester === '3' || semester === 'SEMESTER_3') {
+        where.semester = 'SEMESTER_3';
+      } else {
+        where.semester = semester as any;
+      }
+    }
+    if (academic_year !== undefined) {
+      where.academic_year = Number(academic_year);
+    }
+
+    if (search) {
+      where.OR = [
+        {
+          Subject: {
+            subject_name: { contains: search }
+          }
+        },
+        {
+          Subject: {
+            subject_code: { contains: search }
+          }
+        },
+        {
+          Staff: {
+            staff_first_name: { contains: search }
+          }
+        },
+        {
+          Staff: {
+            staff_last_name: { contains: search }
+          }
+        }
+      ];
+    }
+
+    if (page !== undefined || limit !== undefined) {
+      const activePage = page || 1;
+      const activeLimit = limit || 10;
+      const skip = (activePage - 1) * activeLimit;
+
+      const [courseSections, totalCount] = await Promise.all([
+        prisma.course_Section.findMany({
+          where,
+          include: {
+            Subject: true,
+            Staff: {
+              select: {
+                id: true,
+                employee_code: true,
+                staff_first_name: true,
+                staff_last_name: true,
+                department: true
+              }
+            },
+            _count: {
+              select: { Student_Enrollment: true }
+            },
+            Schedule: true
+          },
+          skip,
+          take: activeLimit
+        }),
+        prisma.course_Section.count({ where })
+      ]);
+
+      const totalPages = Math.ceil(totalCount / activeLimit);
+      return {
+        courseSections,
+        pagination: {
+          totalCount,
+          totalPages,
+          currentPage: activePage,
+          limit: activeLimit
+        }
+      };
+    }
+
     return prisma.course_Section.findMany({
+      where,
       include: {
         Subject: true,
         Staff: {
@@ -99,7 +186,8 @@ export const courseSectionService = {
         },
         _count: {
           select: { Student_Enrollment: true }
-        }
+        },
+        Schedule: true
       }
     });
   },
