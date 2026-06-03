@@ -142,6 +142,7 @@ model Student_Enrollment {
   updated_at        DateTime?                            @default(now()) @db.DateTime(0)
   created_by        String?                              @default("NT") @db.VarChar(50)
   updated_by        String?                              @db.VarChar(50)
+  comment           String?                              @db.Text
   Student           Student                              @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "Student_Enrollment_ibfk_1")
   Course_Section    Course_Section                       @relation(fields: [course_section_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "Student_Enrollment_ibfk_2")
 
