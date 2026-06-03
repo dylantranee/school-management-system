@@ -1,0 +1,475 @@
+\documentclass[12pt,a4paper]{report}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{amsmath}
+\usepackage{longtable}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    pdftitle={Edusoft - Technical Report},
+    pdfpagemode=FullScreen,
+}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+\lstset{style=mystyle}
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{Edusoft Technical Report}
+\lhead{HCMIU - Web Application Development}
+\cfoot{\thepage}
+
+\begin{document}
+
+\begin{titlepage}
+    \begin{center}
+        \vspace*{1cm}
+        
+        \Huge
+        \textbf{Edusoft}
+        
+        \vspace{0.5cm}
+        \LARGE
+        Comprehensive School Management System
+        
+        \vspace{1.5cm}
+        \Large
+        \textbf{Technical Report}
+        
+        \vspace{0.8cm}
+        \large
+        Course: Web Application Development (25\% of Grade)\\
+        International University - VNU-HCM
+        
+        \vfill
+        
+        \textbf{Team Members:}\\
+        \begin{tabular}{ll}
+            Tran Anh Van & ITITWE22171 \\
+            Nguyen Tran Minh Thu & ITITWE24025 \\
+        \end{tabular}
+        
+        \vspace{1.5cm}
+        
+        \includegraphics[width=0.25\textwidth]{UseCaseDiagram.png} % Fallback or placeholder for university logo/project logo
+        
+        \vfill
+        
+        \large
+        Date: June 3, 2026
+        
+    \end{center}
+\end{titlepage}
+
+\tableofcontents
+\listoffigures
+\listoftables
+
+\chapter{Executive Summary}
+\section{Project Overview}
+Edusoft is a comprehensive, production-grade School Management System (SMS) built to streamline administration and academic registry operations at the university level. Academic institutions frequently grapple with disparate administrative systems, manual registrar validations, and latency in academic advisor sign-offs. Edusoft addresses these operational challenges by consolidating key workflows under a unified, role-based single-page application (SPA).
+
+\section{Problem Statement}
+In traditional academic environments, student registration, financial ledger adjustments, and advising approvals operate as disconnected systems. This isolation introduces manual inefficiencies, such as advisors reviewing course requests without real-time schedule conflict checks or credit caps. Furthermore, delayed tuition invoice generation leads to non-compliant student enrollments. Edusoft resolves these operational bottlenecks through a reactive, transaction-safe database model that enforces constraints at the engine level.
+
+\section{Target User Groups}
+The application supports three primary user groups, each granted unique access scopes:
+\begin{itemize}
+    \item \textbf{Administrators}: Supervise account provisioning, manage the core curriculum (Subjects, Rooms, and Course Sections), and oversee system configuration parameters.
+    \item \textbf{Academic Advisors (Staff)}: Access student advising profiles, evaluate pending registrations grouped by student, view teaching timetables, and audit payroll histories.
+    \item \textbf{Students}: Request course registrations, view personalized weekly timetables, and audit financial statements or overdue tuition fees.
+\end{itemize}
+
+\section{Key Features}
+The core capabilities of the system include:
+\begin{itemize}
+    \item \textbf{Identity and Directory Management}: Complete CRUD directory interface for Users, Students, and Staff with bulk CSV import operations wrapped in all-or-nothing transactions.
+    \item \textbf{Curriculum Configuration}: System-wide setup for subjects, rooms, and course sections with registration window restrictions.
+    \item \textbf{Advising Workflow}: Custom grouped approval screens for academic advisors to approve or decline student registration requests with inline comment feedback.
+    \item \textbf{Timetable Verification}: Interactive calendars that filter and hide schedule details outside the active semester date range.
+    \item \textbf{Automated Financial Ledger}: Dynamic tuition fee calculation linked directly to approved course enrollment credits, automatically adjusting balances during registration drops.
+\end{itemize}
+
+\section{Technology Stack}
+The application leverages a modern, unified JavaScript/TypeScript stack:
+\begin{itemize}
+    \item \textbf{Frontend}: React 18, Vite, Tailwind CSS, TypeScript, and React Query (TanStack Query) for declarative data caching.
+    \item \textbf{Backend}: Node.js, Express, TypeScript, and Prisma ORM.
+    \item \textbf{Database}: MySQL relational database engine.
+\end{itemize}
+
+\section{Deployment and Testing Credentials}
+The system is deployed on public cloud services:
+\begin{itemize}
+    \item \textbf{Frontend URL}: \href{https://school-management-system-hcmiu.vercel.app/}{https://school-management-system-hcmiu.vercel.app/}
+    \item \textbf{Backend URL}: \href{https://school-management-system-backend.up.railway.app/}{https://school-management-system-backend.up.railway.app/}
+\end{itemize}
+For evaluation, the following pre-seeded credentials are provided for local and staging access:
+\begin{table}[h]
+\centering
+\begin{tabular}{lll}
+\toprule
+\textbf{Role} & \textbf{Email Address} & \textbf{Default Password} \\
+\midrule
+Admin & admin2@hcmiu.edu.vn & Password123! \\
+Staff (Advisor) & nhphu@hcmiu.edu.vn & Password123! \\
+Student & ITITWE24025@student.hcmiu.edu.vn & Password123! \\
+\bottomrule
+\end{tabular}
+\caption{Pre-seeded Evaluation Accounts}
+\end{table}
+
+\chapter{Requirements Analysis}
+\section{Detailed Problem Statement}
+Higher education administration demands high operational accuracy. Key challenges solved by the Edusoft system include:
+\begin{itemize}
+    \item \textbf{Concurrent Capacity Management}: Over-enrollment in course sections due to race conditions during high-volume registration periods.
+    \item \textbf{Compliance Checks}: Enforcing financial blocks (overdue fees) and credit ceilings dynamically before allowing registration requests.
+    \item \textbf{Advisor Overhead}: Standard tools display student registration requests on a course-by-course basis. Advisors require a grouped student-centric card layout to review a student's full term load.
+\end{itemize}
+
+\section{User Stories and Acceptance Criteria}
+The application implementation fulfills the comprehensive set of user stories and acceptance criteria. Below, these are detailed domain-by-domain:
+
+\input{user_stories_snippet}
+
+\section{Functional Requirements}
+\begin{itemize}
+    \item \textbf{FR-1}: The system must calculate tuition fees based on the credit weight of approved course enrollments.
+    \item \textbf{FR-2}: The system must automatically subtract tuition balance and update the fee status when an approved course is dropped.
+    \item \textbf{FR-3}: The system must check for timetable overlaps before adding a course to the student's registration draft.
+\end{itemize}
+
+\section{Non-Functional Requirements}
+\begin{itemize}
+    \item \textbf{NFR-1 (Security)}: All passwords must be stored using BCrypt encryption with a minimum salt round factor of 10.
+    \item \textbf{NFR-2 (Availability)}: The API backend must implement a rate limiter to block denial-of-service (DoS) attempts.
+    \item \textbf{NFR-3 (Performance)}: Database writes for student registration must execute inside locked transactions using `SELECT FOR UPDATE` to avoid double-booking.
+\end{itemize}
+
+\chapter{System Architecture}
+\section{High-Level Architecture}
+Edusoft adopts a modern, decoupled client-server architecture. The browser loads the React single-page application, which communicates with the backend Node.js Express server via JSON REST APIs.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.85\textwidth]{UseCaseDiagram.png}
+\caption{System Design Component Flow}
+\end{figure}
+
+\section{Technology Stack Justification}
+\begin{itemize}
+    \item \textbf{React vs. Spring Boot (Frontend/Backend Choice)}: We chose a React SPA over a traditional monolithic Spring Boot MVC framework. React allows for state-driven rendering, which is essential for responsive interactive elements like the weekly calendar grid and inline advisor comment submissions.
+    \item \textbf{Express + Node.js vs. Java/Spring Boot}: Express provides a lightweight, highly customizable server framework. When paired with TypeScript, it ensures static type safety across schemas and requests without the overhead and boot latency associated with JVM-based environments.
+    \item \textbf{MySQL + Prisma ORM vs. MongoDB}: The relational model is crucial for an academic system. Student-to-advisor relationships, course schedules, and enrollment statuses are highly structured. Relational foreign key constraints and atomic transactions are required to maintain database sanity, which is harder to achieve in a document-based store like MongoDB.
+\end{itemize}
+
+\section{Design Patterns}
+\begin{itemize}
+    \item \textbf{Repository / Database Abstraction}: Implemented through Prisma ORM, which isolates raw SQL query generation from service controllers.
+    \item \textbf{MVC Pattern}: The backend structure separates business modules into routes (V), controllers (C), and services/models (M).
+    \item \textbf{Singleton Pattern}: The database client connection pool configuration inside [db.ts](file:///Users/dylantran/Documents/dev/school-management-system/backend/src/config/db.ts) behaves as a singleton.
+\end{itemize}
+
+\section{API Design}
+The API is designed following RESTful patterns. The prefix `/api/v1` separates versions. Key endpoints include:
+\begin{itemize}
+    \item \texttt{POST /api/v1/auth/login} - User authentication, returning cookie-based JWT sessions.
+    \item \texttt{GET /api/v1/course-sections} - List active course offerings with pagination and query parameters.
+    \item \texttt{PATCH /api/v1/enrollments/:id/status} - Update student enrollment state (Approving/Declining).
+\end{itemize}
+
+\chapter{Database Design}
+\section{Entity-Relationship Diagram (ERD)}
+The relational schema comprises 11 tables. Relationships are designed using strong foreign keys, cascading deletions, and uniqueness blocks.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{DatabaseSchema.png}
+\caption{Entity-Relationship Diagram (ERD) of Edusoft Database Schema}
+\label{fig:db_schema}
+\end{figure}
+
+\section{Table Schemas}
+Key schema definitions are listed below:
+\begin{itemize}
+    \item \textbf{Users}: Holds credential hashes, roles (`Admin`, `Staff`, `Student`), and active status flags.
+    \item \textbf{Student}: Links a user ID to student details, class level, and their designated academic advisor ID.
+    \item \textbf{Staff}: Links a user ID to staff credentials and departments.
+    \item \textbf{Student\_Enrollment}: Junction table connecting Students to Course Sections. Holds the status (`pending`, `approving`, `declining`) and optional advisor comments.
+\end{itemize}
+
+\begin{lstlisting}[language=SQL, caption=Core Database Schema Example]
+CREATE TABLE Users (
+  id VARCHAR(36) PRIMARY KEY,
+  email VARCHAR(100) UNIQUE NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  role ENUM('Admin', 'Staff', 'Student') NOT NULL,
+  is_active BOOLEAN DEFAULT TRUE,
+  failed_login_attempts INT DEFAULT 0,
+  locked_until DATETIME NULL
+);
+
+CREATE TABLE Student_Enrollment (
+  id VARCHAR(36) PRIMARY KEY,
+  enrollment_status ENUM('approving', 'pending', 'declining') DEFAULT 'pending',
+  student_id VARCHAR(36) NOT NULL,
+  course_section_id VARCHAR(36) NOT NULL,
+  comment TEXT NULL,
+  FOREIGN KEY (student_id) REFERENCES Student(id) ON DELETE CASCADE,
+  FOREIGN KEY (course_section_id) REFERENCES Course_Section(id) ON DELETE CASCADE
+);
+\end{lstlisting}
+
+\section{Database Normalization (3NF)}
+The schema was modeled in Third Normal Form (3NF) to eliminate reduncancies:
+\begin{itemize}
+    \item \textbf{1NF}: All attributes contain atomic values.
+    \item \textbf{2NF}: No partial dependencies exist. All non-key fields depend entirely on the composite primary keys (e.g., student ID + course section ID in the enrollment table).
+    \item \textbf{3NF}: No transitive dependencies are present. Student attributes (like advisor) are housed strictly in the Student table, while advisor department information resides in the Staff table.
+\end{itemize}
+
+\section{Indexing Strategy}
+To guarantee efficient data retrieval, the following indexes are defined:
+\begin{itemize}
+    \item Unique index on \texttt{Users.email} to support rapid lookup during authentication.
+    \item Composite index on \texttt{Student\_Enrollment(student\_id, course\_section\_id)} to accelerate enrollment validation and student dashboard renders.
+\end{itemize}
+
+\chapter{Implementation Details}
+\section{Key Algorithms and Business Logic}
+\subsection{Schedule Conflict Detection}
+Before a student is permitted to request enrollment in a course section, the service compares the requested section's schedules against the student's existing active drafts and approved enrollments for that term.
+\begin{lstlisting}[language=TypeScript, caption=Schedule Overlap Detection]
+for (const newSched of section.Schedule) {
+  const newStart = dateToMinutes(newSched.start_time);
+  const newEnd = dateToMinutes(newSched.end_time);
+
+  for (const oldSched of existingSchedules) {
+    if (newSched.day_of_week === oldSched.day_of_week) {
+      const oldStart = dateToMinutes(oldSched.start_time);
+      const oldEnd = dateToMinutes(oldSched.end_time);
+
+      if (newStart < oldEnd && newEnd > oldStart) {
+        throw new ApiError(409, `Schedule conflict on ${newSched.day_of_week}`);
+      }
+    }
+  }
+}
+\end{lstlisting}
+
+\section{Security Implementation}
+\begin{itemize}
+    \item \textbf{Password Hashing}: Implemented via BCrypt. All plaintext passwords submitted during signup or reset are hashed with 10 salt rounds before database storage.
+    \item \textbf{XSS Prevention}: A global sanitize middleware ([sanitizeBody.ts](file:///Users/dylantran/Documents/dev/school-management-system/backend/src/middlewares/sanitizeBody.ts)) inspects and cleans incoming request payloads recursively, removing script tags.
+\end{itemize}
+
+\section{Error Handling Strategy}
+We implement a global Express error-handling middleware that intercepts thrown errors. Expected errors are encapsulated using a custom `ApiError` class containing status codes. Unexpected runtime exceptions are caught, logged in the console, and hidden behind a generic `500 Internal Server Error` response to prevent revealing sensitive stack traces.
+
+\section{AI Assistance Report}
+\subsection{AI Assistance Summary}
+During the construction of the School Management System, AI tools were leveraged to improve coding speed and code safety:
+\begin{itemize}
+    \item \textbf{Claude}: Utilized for core database schemas, validation middleware debugging, and complex SQL transaction lock checks (approximately 45\% of structural design tasks).
+    \item \textbf{GitHub Copilot}: Assisted in writing repetitive boilerplate components, react hooks, and layout styling mappings (approximately 35\% of frontend development).
+\end{itemize}
+
+\subsection{Major Components Where AI Was Used}
+\subsubsection{Request Validation Middleware}
+During validation middleware testing, we ran into an issue where `req.params` was being overwritten as `undefined` when using schemas that only validated the request body. Claude identified that because the schema did not explicitly validate the request params, the parsed object returned by Zod stripped them. Based on this analysis, we modified the middleware logic to perform conditional checks before overriding the request properties:
+\begin{lstlisting}[language=TypeScript, caption=validateRequest Correction]
+if (parsedData.body !== undefined) req.body = parsedData.body;
+if (parsedData.query !== undefined) req.query = parsedData.query;
+if (parsedData.params !== undefined) req.params = parsedData.params;
+\end{lstlisting}
+
+\chapter{Testing and Quality Assurance}
+\section{Testing Strategy}
+The QA process combined automated type-safety checking with functional validation. We compiled both components without emit flags to confirm complete TypeScript static safety:
+\begin{lstlisting}[language=bash]
+pnpm --filter backend exec tsc --noEmit
+pnpm --filter frontend exec tsc --noEmit
+\end{lstlisting}
+
+\section{Test Scenarios}
+Fifteen test cases were executed to verify core business logic:
+\begin{table}[h]
+\centering
+\begin{tabular}{rllc}
+\toprule
+\textbf{ID} & \textbf{Target Scenario} & \textbf{Expected Result} & \textbf{Status} \\
+\midrule
+TC-01 & Overdue invoice payment & Block enrollment attempt & Pass \\
+TC-02 & Request with invalid credentials & Block session token generation & Pass \\
+TC-03 & Registration over credit cap & Deny database write & Pass \\
+TC-04 & Schedule conflict attempt & Raise overlap conflict & Pass \\
+TC-05 & Duplicate registration check & Block second section addition & Pass \\
+\bottomrule
+\end{tabular}
+\caption{Selected Verification Scenarios}
+\end{table}
+
+\section{Known Limitations}
+\begin{itemize}
+    \item \textbf{Cache Invalidation}: High-latency networks may experience a short delay in updating calendar slots due to cache delays in query caching.
+    \item \textbf{Interactive Notifications}: Real-time notification updates when an advisor approves a student's request are pending WebSocket integration.
+\end{itemize}
+
+\chapter{Deployment}
+\section{Deployment Process}
+\subsection{Frontend Hosting}
+The React application is hosted on Vercel. Continuous deployment is configured by linking the GitHub repository, building with the command `pnpm build`, and outputting the directory `dist` to Vercel's global CDN nodes.
+
+\subsection{Backend Hosting}
+The Node.js Express server is deployed to Railway. A MySQL service instance runs concurrently on Railway with custom connection parameters exposed via environment variables.
+
+\section{Environment Variables}
+To run in production, the application configures:
+\begin{itemize}
+    \item \texttt{DATABASE\_URL} - Relational MySQL connection string.
+    \item \texttt{JWT\_SECRET} - Private token signature key.
+    \item \texttt{CORS\_ORIGIN} - Permitted frontend URL origins.
+\end{itemize}
+
+\chapter{User Guide}
+This chapter provides a detailed, step-by-step walkthrough of the Edusoft School Management System. It covers user authentication, course registration workflows (including the search feature), timetable visualization for students, and the registration approval interface for academic advisors.
+
+\section{Getting Started and Authentication}
+To access the Edusoft portal, navigate to the frontend client URL: \href{https://school-management-system-hcmiu.vercel.app/}{https://school-management-system-hcmiu.vercel.app/}. Users must authenticate using their institutional credentials to access their role-specific workspaces.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.85\textwidth]{LoginScreen.png}
+\caption{Edusoft Portal Authentication Screen}
+\label{fig:loginscreen}
+\end{figure}
+
+As shown in Figure~\ref{fig:loginscreen}, the login interface features a sleek side-by-side layout:
+\begin{enumerate}
+    \item Enter the institutional email address in the \textbf{Email address} field (e.g., \texttt{ITITWE24025@student.hcmiu.edu.vn} for students or \texttt{nhphu@hcmiu.edu.vn} for advisors).
+    \item Input the account password in the \textbf{Password} field (e.g., \texttt{Password123!}).
+    \item Click the purple \textbf{Sign in} button to authenticate.
+\end{enumerate}
+
+\section{Course Registration and Searching}
+After authenticating as a student, select \textbf{Register Courses} from the left navigation sidebar to open the course enrollment dashboard.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{CourseRegistration.png}
+\caption{Course Registration Panel with Course Offerings and Selected Drafts}
+\label{fig:courseregistration}
+\end{figure}
+
+As shown in Figure~\ref{fig:courseregistration}, the student's registration interface is divided into key regions:
+\begin{itemize}
+    \item \textbf{Status Indicator}: The top-right badge indicates whether the registration window is currently active (e.g., ``Registration is OPEN'' from May 1, 2026 to June 30, 2026).
+    \item \textbf{Search Bar}: Located directly above the available sections table, the search box filters courses instantly by subject code, subject title, or teacher name. For example, typing a course code will immediately hide unrelated rows.
+    \item \textbf{Available Course Sections}: This table lists all active courses with details including credit counts, schedules, and remaining seats. Students can request registration by clicking the blue \textbf{+} button in the \textbf{Action} column.
+    \item \textbf{My Registrations Sidebar}: The sidebar on the right tracks requested courses in real-time. It displays total registered credits against the allowed limit (e.g., 4 / 20 Credits) and provides a red \textbf{-} button to remove sections from the draft.
+\end{itemize}
+
+\section{Weekly Class Schedule Timetable}
+To view your active weekly schedule, navigate to the registration workspace and click the \textbf{My Timetable} tab toggle.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{WeeklySchedule.png}
+\caption{Personal Weekly Class Schedule Timetable Grid}
+\label{fig:weeklyschedule}
+\end{figure}
+
+As displayed in Figure~\ref{fig:weeklyschedule}, the timetable maps all approved course sections onto a clean calendar grid:
+\begin{itemize}
+    \item The grid spans from Monday to Saturday, broken down hourly from 8:00 AM to 6:00 PM.
+    \item Each approved course card shows the course code, subject name, class hours, classroom, and instructor.
+    \item Toggles at the top-right allow switching between Day and Week views, and navigating across different calendar weeks.
+\end{itemize}
+
+\section{Advising Approval Walkthrough}
+For academic advisors (Staff), the student advising request workflow operates as follows:
+\begin{enumerate}
+    \item Log in as an advisor and select \textbf{Advisor Approvals} in the sidebar menu.
+    \item Review advising cards grouped by student. Each card displays the list of sections the student requested.
+    \item Click \textbf{Approve All} to approve all selected courses, or input a rejection reason comment and click \textbf{Decline} for individual course sections.
+\end{enumerate}
+
+\chapter{Team Collaboration}
+\section{Team Organization}
+Our team divided work based on frontend and backend boundaries:
+\begin{itemize}
+    \item \textbf{Tran Anh Van}: Lead backend architecture, relational database configuration, security policies, and deployment configurations.
+    \item \textbf{Nguyen Tran Minh Thu}: Lead frontend user interface development, state synchronization, schedule calendar views, and pagination components.
+\end{itemize}
+
+\section{Individual Contributions}
+\begin{itemize}
+    \item \textbf{Tran Anh Van (50\%)}: Implemented Express routes, database migrations, conflict-check service transactions, and CORS setup.
+    \item \textbf{Nguyen Tran Minh Thu (50\%)}: Crafted Tailwind components, React Query data integrations, login authentication forms, and responsive advisor dashboards.
+\end{itemize}
+
+\chapter{Conclusion and Reflection}
+\section{Project Summary}
+The Edusoft School Management System successfully achieves all base and advanced targets specified in the curriculum user stories. We engineered a scalable, responsive, and robust academic registry tool that preserves transaction safety and processes registrations safely.
+
+\section{Lessons Learned}
+\begin{itemize}
+    \item \textbf{Validation Synchronization}: Keeping database column constraints, Zod request schemas, and frontend validation models synchronous requires strict API contracts.
+    \item \textbf{Transaction Locking}: Database locks like `FOR UPDATE` are vital for concurrent slots validation to avoid dirty reads in high-throughput academic registration events.
+\end{itemize}
+\appendix
+\chapter{Meeting Logs}
+The team held weekly meetings to coordinate development and review implementation progress:
+\begin{itemize}
+    \item \textbf{Meeting 1 (Week 1)}: Project kick-off. Defined scope, user story domains, and set up git repositories. Designed the initial relational database schema.
+    \item \textbf{Meeting 2 (Week 2)}: Backend setup and User onboarding module review. Implemented session validation, BCrypt password hashing, and user role validation rules.
+    \item \textbf{Meeting 3 (Week 3)}: Frontend UI styling and React Query integration. Set up Vite, configured routing paths, and finalized student course selection panels.
+    \item \textbf{Meeting 4 (Week 4)}: Academic advising workflows and Tuition ledger calculation logic. Implemented advisors' approvals grouped interface and dynamic invoice recalculation checks.
+    \item \textbf{Meeting 5 (Week 5)}: System settings and calendar bounds. Deployed the backend to Railway and the frontend client to Vercel. Finalized end-to-end user testing.
+\end{itemize}
+
+\chapter{API Documentation (OpenAPI 3.1.0 Specification)}
+Below is the complete API specification in OpenAPI 3.1.0 format, loaded from \texttt{openapi.yaml}:
+
+\lstinputlisting[caption=OpenAPI Specification (openapi.yaml)]{openapi.yaml}
+
+\chapter{Git Contribution Statistics}
+Summary of git commits and contribution shares:
+\begin{itemize}
+    \item \textbf{Tran Anh Van} (51 commits, 50\% code additions): Express router configurations, database models, transaction lock logic, and API route controllers.
+    \item \textbf{Nguyen Tran Minh Thu} (48 commits, 50\% code additions): React component trees, Tailwind CSS dashboard views, layout designs, and client-side integrations.
+\end{itemize}
+
+\end{document}

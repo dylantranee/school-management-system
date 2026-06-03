@@ -6,130 +6,8 @@ This document outlines the system requirements and specifications for the School
 
 ## Domain 1: Identity, Access & Session Management
 
-### SMS-1: User Authentication & Session Security
-**As a** User (Admin, Staff, or Student),  
-**I want to** securely log in and log out of the system,  
-**so that** my account and session are protected from unauthorized access.
 
-#### Acceptance Criteria
-
-**Scenario 1: Successful Authentication**
-* **Given** a user is on the login screen and has an active account,
-* **When** they submit a valid email and password,
-* **Then** the backend must verify the credentials using bcrypt password hashing (enforcing a minimum cost factor of 10),
-* **And** return a `200 OK` status,
-* **And** set a secure JSON Web Token (JWT) inside an `HttpOnly`, `SameSite=Strict`, and `Secure` (in production) cookie,
-* **And** the frontend must redirect the user to their role-specific dashboard.
-
-**Scenario 2: Invalid Credentials & Obfuscated Errors**
-* **Given** a user is on the login screen,
-* **When** they submit an unregistered email or an incorrect password,
-* **Then** the backend must return a `401 Unauthorized` status,
-* **And** the frontend must display a generic "Invalid email or password" error message (obfuscating whether the email or password was the incorrect element).
-
-**Scenario 3: Brute-Force Rate Limiting & Security Lockout**
-* **Given** a user is on the login page,
-* **When** they enter an incorrect password,
-* **Then** the backend must increment `failed_login_attempts` by 1,
-* **And** retrieve the global `MAX_FAILED_LOGIN_ATTEMPTS` setting (defaulting to 5) and `LOGIN_LOCKOUT_DURATION_MINUTES` setting (defaulting to 15),
-* **And** if `failed_login_attempts` reaches or exceeds `MAX_FAILED_LOGIN_ATTEMPTS`, set the account `locked_until` timestamp to the configured minutes in the future,
-* **And** the frontend must display an error: "Account locked due to too many failed attempts. Please try again later.",
-* **And** any further login attempts within this window must be rejected immediately with a `423 Locked` status without validating the password.
-
-**Scenario 4: Lockout Recovery by Admin**
-* **Given** a user account is locked due to consecutive failures,
-* **When** an Admin manually unlocks the account via the User Directory,
-* **Then** the backend must reset `failed_login_attempts` to 0,
-* **And** clear the `locked_until` timestamp,
-* **And** allow the user to immediately attempt to authenticate again.
-
-**Scenario 5: Attempt Login by Suspended Account**
-* **Given** a user account has been deactivated (`is_active` set to false),
-* **When** they attempt to log in with valid credentials,
-* **Then** the backend must deny access and return a `403 Forbidden` status,
-* **And** the frontend must display: "Your account is currently inactive. Please contact the administrator."
-
-**Scenario 6: Input Normalization**
-* **Given** a user is logging in,
-* **When** they submit an email containing uppercase letters or leading/trailing spaces (e.g., `  User@School.Edu  `),
-* **Then** the backend must trim the spaces and convert the email to lowercase before performing the database query, allowing successful authentication.
-
-**Scenario 7: Successful Session Logout**
-* **Given** a user is authenticated,
-* **When** they click the "Logout" button,
-* **Then** the frontend must request `POST /auth/logout`,
-* **And** the backend must respond with a `Set-Cookie` header that expires the JWT cookie (Max-Age=0),
-* **And** blacklist the active JTI (token identifier) in the cache/database for the duration of the token's remaining lifespan to prevent token reuse,
-* **And** the frontend must clear local user state, broadcast a storage event to synchronize logout across other active browser tabs, and redirect to the login screen.
-
-**Scenario 8: Token Expiration and Session Revocation**
-* **Given** a user is logged into the dashboard but has been inactive long enough for their JWT to expire,
-* **When** they attempt to perform any dashboard action (sending an API request),
-* **Then** the backend must return a `401 Unauthorized` status with a token-expired payload,
-* **And** the frontend global interceptor must capture this, clear local user state, and redirect to the login page with a message: "Your session has expired. Please log in again."
-
-**Scenario 9: IP-Based Rate Limiting on Login (Credential Stuffing Protection)**
-* **Given** the login endpoint is active,
-* **When** a single client IP address makes more than 10 login requests within a 60-second window,
-* **Then** the backend must temporarily block further login requests from that IP address,
-* **And** return a `429 Too Many Requests` status with an error message: "Too many login attempts from this IP address. Please try again after 60 seconds."
-
-**Scenario 10: Automatic Blacklist Cleanup**
-* **Given** token JTIs are blacklisted in the cache/database upon logout,
-* **When** a blacklisted token's original expiration timestamp is reached,
-* **Then** the system must automatically prune and delete the expired JTI from the blacklist to prevent database/cache storage growth.
-
----
-
-### SMS-2: Password Recovery & Account Activation
-**As a** User (Admin, Staff, or Student),  
-**I want to** reset my forgotten password or activate my new account,  
-**so that** I can securely establish my credentials without admin pre-determination.
-
-#### Acceptance Criteria
-
-**Scenario 1: Request Password Reset & Rate Limiting**
-* **Given** an active user has forgotten their password,
-* **When** they click "Forgot Password" and submit their email address,
-* **Then** the backend must generate a cryptographically secure, single-use reset token valid for 15 minutes,
-* **And** send a password-reset link containing this token to their email,
-* **And** enforce a rate limit of 3 forgot-password requests per hour per email/IP address (returning a `429 Too Many Requests` status if exceeded),
-* **And** return a generic success message: "If this email is registered, you will receive a reset link." (to prevent email enumeration).
-
-**Scenario 2: Reset Password with Valid Token**
-* **Given** a user clicks on the reset password link,
-* **When** they submit a new password meeting complexity rules (8+ characters, 1 number, 1 special character),
-* **Then** the backend must validate that the token is unexpired and unused,
-* **And** verify that the new password does not match the user's current password (returning a `400 Bad Request` if it does),
-* **And** update the hashed password in the database,
-* **And** mark the token as used,
-* **And** invalidate all other active sessions/tokens for this user to ensure account security,
-* **And** clear any active account lockouts (resetting `failed_login_attempts` to 0 and setting `locked_until` to null).
-
-**Scenario 3: Account Onboarding Activation**
-* **Given** a newly onboarded user has a status of `pending_activation` (represented by the user record having `is_active = false` and no password hash set yet),
-* **When** they visit their secure, tokenized activation link and set their initial password,
-* **Then** the backend must validate that the onboarding token is valid and unexpired (onboarding tokens are valid for 72 hours from generation),
-* **And** validate the password complexity,
-* **And** update the password hash,
-* **And** transition the account status to active (setting `is_active = true`),
-* **And** allow the user to log in.
-
-**Scenario 4: Expired or Reused Token Rejection**
-* **Given** a user attempts to activate an account or reset a password,
-* **When** they submit a token that is expired, has already been used, or (for account activation) is linked to a user account that has already been set to `is_active = true`,
-* **Then** the backend must reject the request with a `400 Bad Request` status,
-* **And** the frontend must display an error: "This link is expired or invalid. Please request a new one."
-
-**Scenario 5: Secure Token Storage**
-* **Given** a password reset or onboarding activation token is generated,
-* **When** the backend saves the token to the database,
-* **Then** the backend must store a cryptographically secure hash of the token (e.g., SHA-256) instead of the plain-text token,
-* **And** verify the token by hashing the client-provided token and comparing it against the stored database hash.
-
----
-
-### SMS-3: User Account Directory (Admin)
+### SMS-1: User Account Directory (Admin)
 **As an** Admin,  
 **I want to** view and manage base user accounts,  
 **so that** I can supervise access, search for users, and prevent duplicate registration.
@@ -191,36 +69,8 @@ This document outlines the system requirements and specifications for the School
 
 ## Domain 2: Profile & Directory Management
 
-### SMS-4: Personal Profile & Security Settings
-**As a** User,  
-**I want to** view my profile details and update my security credentials,  
-**so that** my personal information is accurate and secure.
 
-#### Acceptance Criteria
-
-**Scenario 1: View Personal Details**
-* **Given** an authenticated user is logged in,
-* **When** they request their profile page data,
-* **Then** the system must return their account details (email, role, status) along with their linked profile details (Staff details if staff; Student details if student),
-* **And** reject the request with a `403 Forbidden` status if they attempt to query details for any other user's ID.
-
-**Scenario 2: Change Password from Profile**
-* **Given** a user is logged in,
-* **When** they submit their current password and a new password,
-* **Then** the backend must verify the current password,
-* **And** validate the new password complexity (8+ chars, 1 number, 1 special character),
-* **And** verify that the new password does not match the current password (returning a `400 Bad Request` if it does),
-* **And** save the new password hash,
-* **And** invalidate all other active sessions for the user to prevent unauthorized access.
-
-**Scenario 3: Immutable Core Profile Fields**
-* **Given** a user is editing their profile details,
-* **When** they attempt to modify read-only fields (`email`, `role`, `student_code`, `employee_code`),
-* **Then** the backend must reject the request and return a `400 Bad Request` status.
-
----
-
-### SMS-5: Staff Directory & Profile Management
+### SMS-2: Staff Directory & Profile Management
 **As an** Admin,  
 **I want to** manage staff profiles and departmental records,  
 **so that** the school's employee directory is accurate and audit-compliant.
@@ -269,7 +119,7 @@ This document outlines the system requirements and specifications for the School
 
 ---
 
-### SMS-6: Student Directory & Profile Management
+### SMS-3: Student Directory & Profile Management
 **As an** Admin or Staff member,  
 **I want to** view, search, and manage student profiles,  
 **so that** learner directory records are accurate and searchable.
@@ -315,7 +165,7 @@ This document outlines the system requirements and specifications for the School
 
 ## Domain 3: Curriculum & Classroom Allocation
 
-### SMS-7: Subject Catalog Management
+### SMS-4: Subject Catalog Management
 **As an** Admin,  
 **I want to** configure curriculum subjects,  
 **so that** courses can be officially offered and credits counted.
@@ -349,7 +199,7 @@ This document outlines the system requirements and specifications for the School
 
 ---
 
-### SMS-8: Classroom & Infrastructure Allocation
+### SMS-5: Classroom & Infrastructure Allocation
 **As an** Admin,  
 **I want to** manage physical classrooms and labs,  
 **so that** class scheduling matches room type and capacity.
@@ -379,7 +229,7 @@ This document outlines the system requirements and specifications for the School
 
 ## Domain 4: Course Delivery & Scheduling
 
-### SMS-9: Manage Course Sections Offering
+### SMS-6: Manage Course Sections Offering
 **As an** Admin,  
 **I want to** establish course sections for subjects in active semesters,  
 **so that** students can enroll in specific classes.
@@ -416,7 +266,7 @@ This document outlines the system requirements and specifications for the School
 
 ---
 
-### SMS-10: Class Time & Room Scheduling
+### SMS-7: Class Time & Room Scheduling
 **As an** Admin,  
 **I want to** schedule time slots and room allocations for course sections,  
 **so that** room double-bookings and staff schedule overlaps are blocked.
@@ -461,10 +311,10 @@ This document outlines the system requirements and specifications for the School
 
 ---
 
-### SMS-11: Staff Class Schedule & Portal
+### SMS-8: Staff Class Schedule & Portal
 **As a** Staff member,  
-**I want to** view my teaching schedule and download my official timetable,  
-**so that** I know when and where to teach and can print my schedule.
+**I want to** view my teaching schedule,  
+**so that** I know when and where to teach.
 
 #### Acceptance Criteria
 
@@ -478,14 +328,7 @@ This document outlines the system requirements and specifications for the School
 * **When** they view their schedule dashboard,
 * **Then** the frontend must display a weekly grid layout displaying scheduled day, times, room numbers, and subject codes for all their assigned sections.
 
-**Scenario 3: Timetable PDF Export and Access Rules**
-* **Given** a user is requesting a Staff member's weekly timetable as a PDF,
-* **When** they request the stream,
-* **Then** the backend must verify the requester is either an Admin or the Staff owner,
-* **And** reject the request with a `403 Forbidden` if they are a different user,
-* **Or** generate and stream a structured timetable PDF.
-
-**Scenario 4: Timetable Data Access Control**
+**Scenario 3: Timetable Data Access Control**
 * **Given** an authenticated user is requesting a Staff member's weekly timetable data via the API,
 * **When** the request is received by the backend,
 * **Then** the backend must verify the requester is either an Admin or the target Staff member,
@@ -495,7 +338,7 @@ This document outlines the system requirements and specifications for the School
 
 ## Domain 5: Academic Enrollment
 
-### SMS-12: Course Registration & Enrollment Compliance
+### SMS-9: Course Registration & Enrollment Compliance
 **As a** Student,  
 **I want to** register for courses that match my curriculum and calendar,  
 **As an** Academic Advisor (Staff),  
@@ -536,16 +379,12 @@ This document outlines the system requirements and specifications for the School
 * **And** reject the request with a `403 Forbidden` status if the requester is any other user (including the course teacher, administrators, or other staff members),
 * **Or** update the enrollment status to `approving` (Approved) or `declining` (Declined) in the database,
 * **And** adjust the course section's active enrollment counter accordingly if approved.
-* **But Given** the Student does not currently have an assigned Academic Advisor (value is null),
-* **When** an Admin attempts to approve or decline their pending student enrollment,
-* **Then** the backend must permit the action as a fallback, updating the status and adjusting the counter.
 
 **Scenario 6: Listing Advisee Pending Enrollments**
 * **Given** an Academic Advisor (Staff) is logged in,
 * **When** they request the list of pending student enrollments,
 * **Then** the backend must query the database and return only pending enrollments for students whose assigned `advisor_id` matches the logged-in staff member's ID,
 * **And** exclude any student enrollments for students assigned to other advisors.
-* **And** if an Admin requests the list, return all pending student enrollments as a fallback.
 
 **Scenario 7: Drop Course Section during Registration Window**
 * **Given** a Student is logged in and has an active enrollment (pending or approved) in a course section,
@@ -558,10 +397,10 @@ This document outlines the system requirements and specifications for the School
 
 ---
 
-### SMS-13: Student Personal Portal & Timetable
+### SMS-10: Student Personal Portal & Timetable
 **As a** Student,  
-**I want to** view my personal weekly timetable and export it as a PDF,  
-**so that** I know my weekly schedule and can print it for reference.
+**I want to** view my personal weekly timetable,  
+**so that** I know my weekly schedule.
 
 #### Acceptance Criteria
 
@@ -572,14 +411,7 @@ This document outlines the system requirements and specifications for the School
 * **And** if no approved enrollments exist, return an empty array,
 * **And** the frontend must gracefully display a message: "No approved classes scheduled for this week. Please check your pending registrations."
 
-**Scenario 2: Timetable PDF Export & Security**
-* **Given** a user requests a student's timetable PDF stream,
-* **When** the request is received,
-* **Then** the backend must verify the requester is either an Admin, the Student owner, or the Student's designated Academic Advisor (Staff),
-* **And** return a `403 Forbidden` if they are unauthorized,
-* **Or** stream a structured schedule PDF containing the student's name, code, semester details, and schedule grid.
-
-**Scenario 3: Timetable Data Access Control**
+**Scenario 2: Timetable Data Access Control**
 * **Given** an authenticated user is requesting a student's weekly timetable data via the API,
 * **When** the request is received by the backend,
 * **Then** the backend must verify the requester is either an Admin, the Student owner, or the Student's designated Academic Advisor (Staff),
@@ -589,7 +421,7 @@ This document outlines the system requirements and specifications for the School
 
 ## Domain 6: Finances & Operations
 
-### SMS-14: Student Tuition Billing & Payments
+### SMS-11: Student Tuition Billing & Payments
 **As a** Student, **I want to** view my fee statements and submit payments,  
 **As an** Admin, **I want to** generate bills and track tuition collections,  
 **so that** the school's tuition collections are accurate and managed.
@@ -641,8 +473,8 @@ This document outlines the system requirements and specifications for the School
 
 ---
 
-### SMS-15: Staff Payroll & Payslip Management
-**As a** Staff member, **I want to** view my salary statement history and download my payslip PDFs,  
+### SMS-12: Staff Payroll & Payslip Management
+**As a** Staff member, **I want to** view my salary statement history,  
 **As an** Admin, **I want to** run monthly payroll and issue payslips,  
 **so that** salary processing is correct and transparent.
 
@@ -670,51 +502,14 @@ This document outlines the system requirements and specifications for the School
 * **Then** they must see a chronological list of their disbursed salary records,
 * **And** the system must block access if they try to view another employee's salary history (`403 Forbidden`).
 
-**Scenario 4: Payslip PDF Export & Security**
-* **Given** a user requests a payslip PDF stream,
-* **When** the request is processed,
-* **Then** the backend must verify the requester is either an Admin or the Staff owner of the payslip,
-* **And** return a `403 Forbidden` if they are unauthorized,
-* **Or** generate and stream a formatted payslip PDF showing breakdown of earnings, deductions, and final net payout.
-
-**Scenario 5: Payroll Administration Authorization**
+**Scenario 4: Payroll Administration Authorization**
 * **Given** a user is logged in with the role of Staff or Student,
 * **When** they attempt to generate a monthly payslip or disburse any payroll,
 * **Then** the backend must reject the request and return a `403 Forbidden` status.
 
 ---
 
-### SMS-16: Operational Health & Analytics Dashboard
-**As an** Admin,  
-**I want to** view aggregated analytics on students, staff, and tuition collections,  
-**so that** I can assess the school's operational health at a glance.
-
-#### Acceptance Criteria
-
-**Scenario 1: Operational Health Metrics & Visual Charts for Active Term**
-* **Given** an Admin is on the Dashboard,
-* **When** they view the page,
-* **Then** the backend must retrieve the active term settings (current semester and year),
-* **And** query aggregates for the active term (total approved student enrollments, active staff, total active student records),
-* **And** compute financial sums for the active term (total tuition due, amount paid, and outstanding overdue balances matching the current term),
-* **And** return active enrollment counts grouped by subject for the current term,
-* **And** the frontend must render interactive bar/pie charts representing these active term datasets.
-
-**Scenario 2: Non-Admin Access Rejection**
-* **Given** a user is logged in with the role of Staff or Student,
-* **When** they request dashboard metrics,
-* **Then** the backend must reject the request and return a `403 Forbidden` status.
-
-**Scenario 3: Performance & Zero-Data Fallback**
-* **Given** the system has no registered student, staff, or fee entries (fresh database),
-* **When** the Admin accesses the dashboard,
-* **Then** the backend metrics must return `0` values (not nulls or errors),
-* **And** the frontend must gracefully display a "No data available to display" visual state instead of crashing.
-* **And** the backend must compute metrics under 500ms using efficient indexes or caching.
-
----
-
-### SMS-17: System Policy & Global Settings
+### SMS-13: System Policy & Settings Configuration
 **As an** Admin,  
 **I want to** dynamically configure global limits and active school term parameters,  
 **so that** school policies are enforced at runtime without restarting the server.
@@ -735,12 +530,7 @@ This document outlines the system requirements and specifications for the School
 * **When** they attempt to read or modify the global configurations,
 * **Then** the backend must reject the request and return a `403 Forbidden` status.
 
-**Scenario 3: Unauthenticated Request Rejection**
-* **Given** an anonymous user is not logged in,
-* **When** they attempt to request or update the system settings,
-* **Then** the backend must return a `401 Unauthorized` status.
-
-**Scenario 4: Active Term Configuration & Historical Safeguards**
+**Scenario 3: Active Term Configuration & Historical Safeguards**
 * **Given** the system contains historical grade records, fee invoices, and student schedules,
 * **When** the Admin updates the `CURRENT_SEMESTER` or `CURRENT_ACADEMIC_YEAR` configs,
 * **Then** the system must successfully apply this setting to all future course offerings and registrations,

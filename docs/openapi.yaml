@@ -1,0 +1,1829 @@
+openapi: '3.1.0'
+info:
+  title: School Management System API
+  version: '1.0.0'
+  description: API specification for a School Management System with user authentication, academic management, scheduling, fees, and payroll processing.
+servers:
+  - url: https://api.example.com/api/v1
+tags:
+  - name: auth
+    description: Authentication operations
+  - name: users
+    description: User account management with roles
+  - name: staff
+    description: Staff profile management
+  - name: students
+    description: Student profile management
+  - name: subjects
+    description: Academic subjects management
+  - name: courseSections
+    description: Course sections linking subjects, staff, and semesters
+  - name: schedules
+    description: Scheduling of course sections in rooms and times
+  - name: fees
+    description: Student fee tracking and payments
+  - name: enrollments
+    description: Student enrollments in course sections
+  - name: salaries
+    description: Payroll processing for staff
+  - name: rooms
+    description: Room management
+paths:
+  /auth/login:
+    post:
+      tags:
+        - auth
+      summary: User login
+      description: Authenticate user and return JWT token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          description: Successful login with JWT token
+          headers:
+            Set-Cookie:
+              description: Contains the HttpOnly, Secure JWT cookie.
+              schema:
+                type: string
+          content: {}
+        '400':
+          description: Bad request (missing or invalid credentials)
+        '401':
+          description: Unauthorized (invalid username or password)
+        '403':
+          description: Forbidden (Account is inactive or suspended).
+        '429':
+          description: Too Many Requests (Account temporarily locked due to excessive failed attempts).
+  /auth/logout:
+    post:
+      tags:
+        - auth
+      summary: User logout
+      description: Invalidate user session or token.
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Successful logout
+          headers:
+            Set-Cookie:
+              description: Clears the JWT cookie by setting Max-Age=0.
+              schema:
+                type: string
+        '401':
+          description: Unauthorized (invalid or missing token)
+  /users:
+    get:
+      tags:
+        - users
+      summary: Get all users
+      description: Requires Admin Role.
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (requires Admin role)
+    post:
+      tags:
+        - users
+      summary: Create a new user
+      description: Requires Admin Role.
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (requires Admin role)
+        '409':
+          description: Conflict (email already exists in the system)
+  /users/{userId}:
+    get:
+      tags:
+        - users
+      summary: Get user by ID
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
+    put:
+      tags:
+        - users
+      summary: Update user by ID
+      description: Requires Admin Role.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+      responses:
+        '200':
+          description: User updated successfully
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (requires Admin role)
+        '404':
+          description: User not found
+        '409':
+          description: Conflict (email already exists in the system)
+    delete:
+      tags:
+        - users
+      summary: Delete user by ID
+      description: Requires Admin Role.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User deleted successfully
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (requires Admin role)
+        '404':
+          description: User not found
+  /staff:
+    get:
+      tags:
+        - staff
+      summary: Get all staff members
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: List of staff members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Staff'
+        '401':
+          description: Unauthorized
+    post:
+      tags:
+        - staff
+      summary: Create a new staff member
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StaffCreate'
+      responses:
+        '201':
+          description: Staff member created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Staff'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '409':
+          description: Conflict (employee_code already exists)
+  /staff/{staffId}:
+    get:
+      tags:
+        - staff
+      summary: Get staff member by ID
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: staffId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Staff member details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Staff'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '404':
+          description: Staff member not found
+    put:
+      tags:
+        - staff
+      summary: Update staff member by ID
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: staffId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StaffUpdate'
+      responses:
+        '200':
+          description: Staff member updated successfully
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '404':
+          description: Staff member not found
+        '409':
+          description: Conflict (employee_code already exists)
+    delete:
+      tags:
+        - staff
+      summary: Delete staff member by ID
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: staffId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Staff member deleted successfully
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '404':
+          description: Staff member not found
+  /staff/{staffId}/salaries:
+    get:
+      tags:
+        - salaries
+      summary: Get salary history for a specific staff member
+      description: Allows staff members to view their own payslips.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: staffId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Salary history for staff member
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SalaryResult'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '404':
+          description: Staff member not found
+  /students:
+    get:
+      tags:
+        - students
+      summary: Get all students
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: List of students
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Student'
+        '401':
+          description: Unauthorized
+    post:
+      tags:
+        - students
+      summary: Create a new student
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudentCreate'
+      responses:
+        '201':
+          description: Student created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Student'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '409':
+          description: Conflict (student_code already exists)
+  /students/{studentId}:
+    get:
+      tags:
+        - students
+      summary: Get student by ID
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: studentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Student details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Student'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '404':
+          description: Student not found
+    put:
+      tags:
+        - students
+      summary: Update student by ID
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: studentId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudentUpdate'
+      responses:
+        '200':
+          description: Student updated successfully
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '404':
+          description: Student not found
+        '409':
+          description: Conflict (student_code already exists)
+    delete:
+      tags:
+        - students
+      summary: Delete student by ID
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: studentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Student deleted successfully
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '404':
+          description: Student not found
+  /students/{studentId}/timetable:
+    get:
+      tags:
+        - students
+      summary: Get timetable for a student
+      description: Returns joined enrollments with schedules for the student.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: studentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Student timetable
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Schedule'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '404':
+          description: Student not found
+  /subjects:
+    get:
+      tags:
+        - subjects
+      summary: Get all subjects
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: List of subjects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Subject'
+        '401':
+          description: Unauthorized
+    post:
+      tags:
+        - subjects
+      summary: Create a new subject
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubjectCreate'
+      responses:
+        '201':
+          description: Subject created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subject'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '409':
+          description: Conflict (subject code already exists)
+  /subjects/{subjectId}:
+    get:
+      tags:
+        - subjects
+      summary: Get subject by ID
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: subjectId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Subject details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subject'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '404':
+          description: Subject not found
+    put:
+      tags:
+        - subjects
+      summary: Update subject by ID
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: subjectId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubjectUpdate'
+      responses:
+        '200':
+          description: Subject updated successfully
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '404':
+          description: Subject not found
+        '409':
+          description: Conflict (subject code already exists)
+    delete:
+      tags:
+        - subjects
+      summary: Delete subject by ID
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: subjectId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Subject deleted successfully
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '404':
+          description: Subject not found
+  /courseSections:
+    get:
+      tags:
+        - courseSections
+      summary: Get all course sections
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: List of course sections
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CourseSection'
+        '401':
+          description: Unauthorized
+    post:
+      tags:
+        - courseSections
+      summary: Create a new course section
+      description: Requires Admin Role.
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseSectionCreate'
+      responses:
+        '201':
+          description: Course section created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseSection'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (requires Admin role)
+  /courseSections/{sectionId}:
+    get:
+      tags:
+        - courseSections
+      summary: Get course section by ID
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: sectionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Course section details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseSection'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '404':
+          description: Course section not found
+    put:
+      tags:
+        - courseSections
+      summary: Update course section by ID
+      description: Requires Admin Role.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: sectionId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseSectionUpdate'
+      responses:
+        '200':
+          description: Course section updated successfully
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (requires Admin role)
+        '404':
+          description: Course section not found
+    delete:
+      tags:
+        - courseSections
+      summary: Delete course section by ID
+      description: Requires Admin Role.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: sectionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Course section deleted successfully
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (requires Admin role)
+        '404':
+          description: Course section not found
+  /schedules:
+    get:
+      tags:
+        - schedules
+      summary: Get all schedules
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: List of schedules
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Schedule'
+        '401':
+          description: Unauthorized
+    post:
+      tags:
+        - schedules
+      summary: Create a new schedule
+      description: Requires Admin Role.
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleCreate'
+      responses:
+        '201':
+          description: Schedule created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (requires Admin role)
+        '409':
+          description: Conflict (room scheduling clash)
+  /schedules/{scheduleId}:
+    get:
+      tags:
+        - schedules
+      summary: Get schedule by ID
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: scheduleId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Schedule details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '404':
+          description: Schedule not found
+    put:
+      tags:
+        - schedules
+      summary: Update schedule by ID
+      description: Requires Admin Role.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: scheduleId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleUpdate'
+      responses:
+        '200':
+          description: Schedule updated successfully
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (requires Admin role)
+        '404':
+          description: Schedule not found
+        '409':
+          description: Conflict (room scheduling clash)
+    delete:
+      tags:
+        - schedules
+      summary: Delete schedule by ID
+      description: Requires Admin Role.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: scheduleId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Schedule deleted successfully
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (requires Admin role)
+        '404':
+          description: Schedule not found
+  /fees:
+    get:
+      tags:
+        - fees
+      summary: Get all fees records
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: List of fees records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Fee'
+        '401':
+          description: Unauthorized
+    post:
+      tags:
+        - fees
+      summary: Create a new fee record
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeeCreate'
+      responses:
+        '201':
+          description: Fee record created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Fee'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+  /fees/{feeId}:
+    get:
+      tags:
+        - fees
+      summary: Get fee record by ID
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: feeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Fee record details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Fee'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '404':
+          description: Fee record not found
+    put:
+      tags:
+        - fees
+      summary: Update fee record by ID
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: feeId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeeUpdate'
+      responses:
+        '200':
+          description: Fee record updated successfully
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '404':
+          description: Fee record not found
+    delete:
+      tags:
+        - fees
+      summary: Delete fee record by ID
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: feeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Fee record deleted successfully
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '404':
+          description: Fee record not found
+  /enrollments:
+    get:
+      tags:
+        - enrollments
+      summary: Get all enrollments
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: List of enrollments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Enrollment'
+        '401':
+          description: Unauthorized
+    post:
+      tags:
+        - enrollments
+      summary: Create a new enrollment
+      description: Block enrollment if student has overdue fees.
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnrollmentCreate'
+      responses:
+        '201':
+          description: Enrollment created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Enrollment'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (student has overdue fees)
+  /enrollments/{enrollmentId}:
+    get:
+      tags:
+        - enrollments
+      summary: Get enrollment by ID
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: enrollmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Enrollment details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Enrollment'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '404':
+          description: Enrollment not found
+    put:
+      tags:
+        - enrollments
+      summary: Update enrollment by ID
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: enrollmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnrollmentUpdate'
+      responses:
+        '200':
+          description: Enrollment updated successfully
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (student has overdue fees)
+        '404':
+          description: Enrollment not found
+    delete:
+      tags:
+        - enrollments
+      summary: Delete enrollment by ID
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: enrollmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Enrollment deleted successfully
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '404':
+          description: Enrollment not found
+  /salaries:
+    get:
+      tags:
+        - salaries
+      summary: Get all processed salaries
+      description: Admin endpoint to view all historical payroll records.
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: List of processed salaries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SalaryResult'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+    post:
+      tags:
+        - salaries
+      summary: Process payroll
+      description: Admin endpoint to process payroll (Base + Allowances - Deductions).
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SalaryProcess'
+      responses:
+        '200':
+          description: Payroll processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalaryResult'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (non-admin user)
+  /rooms:
+    get:
+      tags:
+        - rooms
+      summary: Get all rooms
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: List of rooms
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Room'
+        '401':
+          description: Unauthorized
+    post:
+      tags:
+        - rooms
+      summary: Create a new room
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoomCreate'
+      responses:
+        '201':
+          description: Room created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Room'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+  /rooms/{roomId}:
+    get:
+      tags:
+        - rooms
+      summary: Get room by ID
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Room details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Room'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '404':
+          description: Room not found
+    put:
+      tags:
+        - rooms
+      summary: Update room by ID
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoomUpdate'
+      responses:
+        '200':
+          description: Room updated successfully
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '404':
+          description: Room not found
+    delete:
+      tags:
+        - rooms
+      summary: Delete room by ID
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Room deleted successfully
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '404':
+          description: Room not found
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: token
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum:
+            - Admin
+            - Staff
+            - Student
+      required:
+        - id
+        - email
+        - role
+    UserCreate:
+      type: object
+      required:
+        - email
+        - password
+        - role
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+        role:
+          type: string
+          enum:
+            - Admin
+            - Staff
+            - Student
+    UserUpdate:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+        role:
+          type: string
+          enum:
+            - Admin
+            - Staff
+            - Student
+    Staff:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        employee_code:
+          type: string
+        department:
+          type: string
+        user:
+          $ref: '#/components/schemas/User'
+      required:
+        - id
+        - employee_code
+        - department
+        - user
+    StaffCreate:
+      type: object
+      required:
+        - employee_code
+        - department
+        - user
+      properties:
+        employee_code:
+          type: string
+        department:
+          type: string
+        user:
+          $ref: '#/components/schemas/UserCreate'
+    StaffUpdate:
+      type: object
+      properties:
+        employee_code:
+          type: string
+        department:
+          type: string
+        user:
+          $ref: '#/components/schemas/UserUpdate'
+    Student:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        student_code:
+          type: string
+        user:
+          $ref: '#/components/schemas/User'
+      required:
+        - id
+        - student_code
+        - user
+    StudentCreate:
+      type: object
+      required:
+        - student_code
+        - user
+      properties:
+        student_code:
+          type: string
+        user:
+          $ref: '#/components/schemas/UserCreate'
+    StudentUpdate:
+      type: object
+      properties:
+        student_code:
+          type: string
+        user:
+          $ref: '#/components/schemas/UserUpdate'
+    Subject:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        code:
+          type: string
+        credits:
+          type: integer
+      required:
+        - id
+        - name
+        - code
+        - credits
+    SubjectCreate:
+      type: object
+      required:
+        - name
+        - code
+        - credits
+      properties:
+        name:
+          type: string
+        code:
+          type: string
+        credits:
+          type: integer
+    SubjectUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        code:
+          type: string
+        credits:
+          type: integer
+    CourseSection:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        subject_id:
+          type: string
+          format: uuid
+        staff_id:
+          type: string
+          format: uuid
+        semester:
+          type: string
+        year:
+          type: integer
+        section_number:
+          type: string
+      required:
+        - id
+        - subject_id
+        - staff_id
+        - semester
+        - year
+        - section_number
+    CourseSectionCreate:
+      type: object
+      required:
+        - subject_id
+        - staff_id
+        - semester
+        - year
+        - section_number
+      properties:
+        subject_id:
+          type: string
+          format: uuid
+        staff_id:
+          type: string
+          format: uuid
+        semester:
+          type: string
+        year:
+          type: integer
+        section_number:
+          type: string
+    CourseSectionUpdate:
+      type: object
+      properties:
+        subject_id:
+          type: string
+          format: uuid
+        staff_id:
+          type: string
+          format: uuid
+        semester:
+          type: string
+        year:
+          type: integer
+        section_number:
+          type: string
+    Schedule:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        section_id:
+          type: string
+          format: uuid
+        room_id:
+          type: string
+          format: uuid
+        day:
+          type: string
+          enum:
+            - Monday
+            - Tuesday
+            - Wednesday
+            - Thursday
+            - Friday
+            - Saturday
+            - Sunday
+        start_time:
+          type: string
+          format: time
+        end_time:
+          type: string
+          format: time
+      required:
+        - id
+        - section_id
+        - room_id
+        - day
+        - start_time
+        - end_time
+    ScheduleCreate:
+      type: object
+      required:
+        - section_id
+        - room_id
+        - day
+        - start_time
+        - end_time
+      properties:
+        section_id:
+          type: string
+          format: uuid
+        room_id:
+          type: string
+          format: uuid
+        day:
+          type: string
+          enum:
+            - Monday
+            - Tuesday
+            - Wednesday
+            - Thursday
+            - Friday
+            - Saturday
+            - Sunday
+        start_time:
+          type: string
+          format: time
+        end_time:
+          type: string
+          format: time
+    ScheduleUpdate:
+      type: object
+      properties:
+        section_id:
+          type: string
+          format: uuid
+        room_id:
+          type: string
+          format: uuid
+        day:
+          type: string
+          enum:
+            - Monday
+            - Tuesday
+            - Wednesday
+            - Thursday
+            - Friday
+            - Saturday
+            - Sunday
+        start_time:
+          type: string
+          format: time
+        end_time:
+          type: string
+          format: time
+    Fee:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        student_id:
+          type: string
+          format: uuid
+        amount_due:
+          type: number
+          format: float
+        amount_paid:
+          type: number
+          format: float
+        due_date:
+          type: string
+          format: date
+        payment_status:
+          type: string
+          enum:
+            - paid
+            - unpaid
+            - overdue
+      required:
+        - id
+        - student_id
+        - amount_due
+        - amount_paid
+        - due_date
+        - payment_status
+    FeeCreate:
+      type: object
+      required:
+        - student_id
+        - amount_due
+        - due_date
+        - payment_status
+      properties:
+        student_id:
+          type: string
+          format: uuid
+        amount_due:
+          type: number
+          format: float
+        amount_paid:
+          type: number
+          format: float
+        due_date:
+          type: string
+          format: date
+        payment_status:
+          type: string
+          enum:
+            - paid
+            - unpaid
+            - overdue
+    FeeUpdate:
+      type: object
+      properties:
+        amount_due:
+          type: number
+          format: float
+        amount_paid:
+          type: number
+          format: float
+        due_date:
+          type: string
+          format: date
+        payment_status:
+          type: string
+          enum:
+            - paid
+            - unpaid
+            - overdue
+    Enrollment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        student_id:
+          type: string
+          format: uuid
+        section_id:
+          type: string
+          format: uuid
+        enrollment_status:
+          type: string
+          enum:
+            - Active
+            - Dropped
+            - Completed
+      required:
+        - id
+        - student_id
+        - section_id
+        - enrollment_status
+    EnrollmentCreate:
+      type: object
+      required:
+        - student_id
+        - section_id
+        - enrollment_status
+      properties:
+        student_id:
+          type: string
+          format: uuid
+        section_id:
+          type: string
+          format: uuid
+        enrollment_status:
+          type: string
+          enum:
+            - Active
+            - Dropped
+            - Completed
+    EnrollmentUpdate:
+      type: object
+      properties:
+        student_id:
+          type: string
+          format: uuid
+        section_id:
+          type: string
+          format: uuid
+        enrollment_status:
+          type: string
+          enum:
+            - Active
+            - Dropped
+            - Completed
+    SalaryProcess:
+      type: object
+      required:
+        - staff_id
+        - base_salary
+        - payment_month
+        - payment_year
+      properties:
+        staff_id:
+          type: string
+          format: uuid
+        base_salary:
+          type: number
+          format: float
+        allowances:
+          type: number
+          format: float
+          default: 0
+        deductions:
+          type: number
+          format: float
+          default: 0
+        payment_month:
+          type: integer
+          description: 1-12
+        payment_year:
+          type: integer
+    SalaryResult:
+      type: object
+      properties:
+        staff_id:
+          type: string
+          format: uuid
+        total_salary:
+          type: number
+          format: float
+        processed_at:
+          type: string
+          format: date-time
+        base_salary:
+          type: number
+          format: float
+        allowances:
+          type: number
+          format: float
+        deductions:
+          type: number
+          format: float
+        payment_month:
+          type: integer
+          description: 1-12
+        payment_year:
+          type: integer
+    Room:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        room_number:
+          type: string
+        capacity:
+          type: integer
+        is_lab:
+          type: boolean
+      required:
+        - id
+        - room_number
+        - capacity
+        - is_lab
+    RoomCreate:
+      type: object
+      required:
+        - room_number
+        - capacity
+        - is_lab
+      properties:
+        room_number:
+          type: string
+        capacity:
+          type: integer
+        is_lab:
+          type: boolean
+    RoomUpdate:
+      type: object
+      properties:
+        room_number:
+          type: string
+        capacity:
+          type: integer
+        is_lab:
+          type: boolean
