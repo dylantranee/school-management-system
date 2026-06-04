@@ -41,7 +41,7 @@ export const CreateUserForm = () => {
         setEmail('');
         setRole('');
         if (data.activationToken) {
-          setActivationLink(`http://localhost:5173/activate?token=${data.activationToken}`);
+          setActivationLink(`${window.location.origin}/activate?token=${data.activationToken}`);
         }
       }
     });

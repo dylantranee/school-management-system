@@ -53,7 +53,7 @@ export const UserManagementPage = () => {
       const res = await actionFn();
       setLocalSuccessMsg(successText);
       if (res?.activationToken) {
-        setCopiedLink(`http://localhost:5173/activate?token=${res.activationToken}`);
+        setCopiedLink(`${window.location.origin}/activate?token=${res.activationToken}`);
       }
       refetch();
     } catch (err: any) {
